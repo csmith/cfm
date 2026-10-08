@@ -8,32 +8,61 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/yuin/goldmark"
-	"github.com/yuin/goldmark/extension"
-	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/v2/extension"
+	"github.com/yuin/goldmark/v2/parser"
+	"github.com/yuin/goldmark/v2/renderer/html"
+	"github.com/yuin/goldmark/v2/util"
 )
 
-type disableCodeBlocks struct{}
+// commonMarkWithoutCodeBlocks mirrors parser.CommonMark but leaves out the
+// indented code block parser.
+type commonMarkWithoutCodeBlocks struct{}
 
-func (d *disableCodeBlocks) SetParserOption(config *parser.Config) {
-	config.BlockParsers = config.BlockParsers.Remove(parser.NewCodeBlockParser())
+func (commonMarkWithoutCodeBlocks) ParserOptions(*parser.Config) []parser.Option {
+	heading := parser.WithAutoHeadingID()
+	return []parser.Option{
+		parser.WithBlockParsers(
+			util.Prioritized(parser.NewSetextHeadingParser(heading), 100),
+			util.Prioritized(parser.NewThematicBreakParser(), 200),
+			util.Prioritized(parser.NewListParser(), 300),
+			util.Prioritized(parser.NewListItemParser(), 400),
+			util.Prioritized(parser.NewATXHeadingParser(heading), 600),
+			util.Prioritized(parser.NewFencedCodeBlockParser(), 700),
+			util.Prioritized(parser.NewBlockquoteParser(), 800),
+			util.Prioritized(parser.NewHTMLBlockParser(), 900),
+			util.Prioritized(parser.NewParagraphParser(), 1000),
+		),
+		parser.WithInlineParsers(
+			util.Prioritized(parser.NewCodeSpanParser(), 100),
+			util.Prioritized(parser.NewLinkParser(), 200),
+			util.Prioritized(parser.NewAutoLinkParser(), 300),
+			util.Prioritized(parser.NewRawHTMLParser(), 400),
+			util.Prioritized(parser.NewEmphasisParser(), 500),
+		),
+		parser.WithParagraphTransformers(
+			util.Prioritized(parser.LinkReferenceParagraphTransformer, 100),
+		),
+	}
 }
 
-var md = goldmark.New(
-	goldmark.WithExtensions(
-		extension.Typographer,
-		extension.Table,
-		extension.Strikethrough,
-		extension.Linkify,
-		extension.Footnote,
+var mdParser = parser.New(
+	parser.WithDefaultParsers(false),
+	parser.WithExtensions(
+		commonMarkWithoutCodeBlocks{},
+		extension.TypographerParser,
+		extension.TableParser,
+		extension.StrikethroughParser,
+		extension.LinkifyParser,
+		extension.FootnoteParser,
 	),
-	goldmark.WithParserOptions(
-		parser.WithAutoHeadingID(),
-		&disableCodeBlocks{},
-	),
-	goldmark.WithRendererOptions(
-		html.WithUnsafe(),
+)
+
+var mdRenderer = html.New(
+	html.WithUnsafe(),
+	html.WithExtensions(
+		extension.TableHTMLRenderer,
+		extension.StrikethroughHTMLRenderer,
+		extension.FootnoteHTMLRenderer,
 	),
 )
 
@@ -149,7 +178,8 @@ var fixtures = []fixture{
 func main() {
 	for _, f := range fixtures {
 		var buf bytes.Buffer
-		if err := md.Convert([]byte(f.md), &buf); err != nil {
+		doc := mdParser.ParseStringSource(f.md)
+		if err := mdRenderer.RenderStringSource(&buf, f.md, doc); err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %v\n", f.name, err)
 			os.Exit(1)
 		}

@@ -119,8 +119,8 @@ func TestTableCodeSpans(t *testing.T) {
 		{"unmatched backtick", "`x \\| y", "`x | y"},
 		{"unmatched backtick run", "``x \\| y", "``x | y"},
 		{"escaped pipe outside code span", "x \\| y", "x | y"},
-		{"code pipe with typographer", "`a\\|b` -- done", "<code>a|b</code> &ndash; done"},
-		{"code pipe with quotes", "`a\\|b` it's here", "<code>a|b</code> it&rsquo;s here"},
+		{"code pipe with typographer", "`a\\|b` -- done", "<code>a|b</code> – done"},
+		{"code pipe with quotes", "`a\\|b` it's here", "<code>a|b</code> it’s here"},
 		{"code pipe with entity", "`\\|` &amp; done", "<code>|</code> &amp; done"},
 		{"emphasis around escaped pipe", "*x \\| y*", "<em>x | y</em>"},
 	}
@@ -170,7 +170,7 @@ func TestEntities(t *testing.T) {
 		{"bare amp", "1 < 2 > 3 & 4", "1 &lt; 2 &gt; 3 &amp; 4"},
 		{"empty name", "&; amp", "&amp;; amp"},
 		{"entity quote not typographic", "&quot;hi&quot; there", "&quot;hi&quot; there"},
-		{"entity dash not typographic", "a &amp; b -- c", "a &amp; b &ndash; c"},
+		{"entity dash not typographic", "a &amp; b -- c", "a &amp; b – c"},
 		{"entity in code span", "`&copy;` stays", "<code>&amp;copy;</code> stays"},
 	}
 	for _, tt := range tests {
@@ -222,7 +222,7 @@ func TestInlineLinks(t *testing.T) {
 		{"query kept", "[a](/s?q=x&y=1)", `<a href="/s?q=x&amp;y=1">a</a>`},
 		{"space in bare dest fails", "[a](/x y)", `[a](/x y)`},
 		{"unclosed paren", "[text](missing-paren", "[text](missing-paren"},
-		{"unclosed title", `[a](/x "unclosed`, `[a](/x &ldquo;unclosed`},
+		{"unclosed title", `[a](/x "unclosed`, `[a](/x “unclosed`},
 		{"escaped quote in title", `[a](/x "ti\"tle")`, `<a href="/x" title="ti&quot;tle">a</a>`},
 		{"multiline title", "[a](/x \"ti\n tle\")", "<a href=\"/x\" title=\"ti\ntle\">a</a>"},
 		{"empty title", `[a](/x "")`, `<a href="/x" title="">a</a>`},
@@ -348,10 +348,10 @@ func TestRawHTML(t *testing.T) {
 		{"processing instruction", "<?pi data?> ok", "<?pi data?> ok"},
 		{"declaration", "<!A decl> ok", "<!A decl> ok"},
 		{"cdata", "<![CDATA[x]]> ok", "<![CDATA[x]]> ok"},
-		{"unclosed comment", "a <!-- x", "a &lt;!&ndash; x"},
+		{"unclosed comment", "a <!-- x", "a &lt;!– x"},
 		{"autolink precedence", "<http://a.b>", `<a href="http://a.b">http://a.b</a>`},
 		{"typographer angle quotes", "foo...bar..x.--y---z<<w>>v",
-			"foo&hellip;bar..x.&ndash;y&mdash;z&laquo;w&raquo;v"},
+			"foo…bar..x.–y—z«w»v"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -367,24 +367,24 @@ func TestTypography(t *testing.T) {
 		want   string
 	}{
 		{"double quotes", `"Double quoted" and 'single quoted' and "nested 'inner' outer".`,
-			"&ldquo;Double quoted&rdquo; and &lsquo;single quoted&rsquo; and " +
-				"&ldquo;nested &lsquo;inner&rsquo; outer&rdquo;."},
-		{"apostrophes", "Don't can't won't it's a party.", "Don&rsquo;t can&rsquo;t won&rsquo;t it&rsquo;s a party."},
+			"“Double quoted” and ‘single quoted’ and " +
+				"“nested ‘inner’ outer”."},
+		{"apostrophes", "Don't can't won't it's a party.", "Don’t can’t won’t it’s a party."},
 		{"dashes ellipsis", "An en -- dash, an em --- dash and an elipsis... done.",
-			"An en &ndash; dash, an em &mdash; dash and an elipsis&hellip; done."},
+			"An en – dash, an em — dash and an elipsis… done."},
 		{"quotes around link", `"[linked](/page)" and 'plain'.`,
-			"&ldquo;<a href=\"/page\">linked</a>&rdquo; and &lsquo;plain&rsquo;."},
-		{"decade", "e.g. '90s style", "e.g. &rsquo;90s style"},
-		{"twas", "'twas the night", "&rsquo;twas the night"},
-		{"em contraction", "'em ok", "&rsquo;em ok"},
-		{"possessive plural", "dogs' bowls", "dogs&rsquo; bowls"},
-		{"rock and roll", "rock'n'roll", "rock&rsquo;n&rsquo;roll"},
-		{"open close counter", `"a" 'b' "c`, "&ldquo;a&rdquo; &lsquo;b&rsquo; &ldquo;c"},
-		{"quote after digit", `"Monitor 21"" ok`, "&ldquo;Monitor 21&quot;&rdquo; ok"},
+			"“<a href=\"/page\">linked</a>” and ‘plain’."},
+		{"decade", "e.g. '90s style", "e.g. ’90s style"},
+		{"twas", "'twas the night", "’twas the night"},
+		{"em contraction", "'em ok", "’em ok"},
+		{"possessive plural", "dogs' bowls", "dogs’ bowls"},
+		{"rock and roll", "rock'n'roll", "rock’n’roll"},
+		{"open close counter", `"a" 'b' "c`, "“a” ‘b’ “c"},
+		{"quote after digit", `"Monitor 21"" ok`, "“Monitor 21&quot;” ok"},
 		{"plain quotes between letters", `a"b"c`, "a&quot;b&quot;c"},
-		{"single between letters", "a'b'c", "a&rsquo;b&rsquo;c"},
+		{"single between letters", "a'b'c", "a’b’c"},
 		{"double ellipsis", "foo..bar", "foo..bar"},
-		{"four dashes", "x----y", "x&mdash;-y"},
+		{"four dashes", "x----y", "x—-y"},
 		{"caret unaffected", "a ^ b", "a ^ b"},
 	}
 	for _, tt := range tests {
@@ -401,7 +401,7 @@ func TestTextEscaping(t *testing.T) {
 		want   string
 	}{
 		{"specials", `a & b < c > d " e`, `a &amp; b &lt; c &gt; d &quot; e`},
-		{"apostrophe kept", "it's", "it&rsquo;s"},
+		{"apostrophe kept", "it's", "it’s"},
 		{"nul replaced", "a\x00b", "a\uFFFDb"},
 		{"unicode preserved", "Grüße aus München, 東京 and emoji 🎉", "Grüße aus München, 東京 and emoji 🎉"},
 		{"nbsp preserved", "a\u00a0b", "a\u00a0b"},

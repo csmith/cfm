@@ -5,6 +5,18 @@ import (
 	"unicode/utf8"
 )
 
+const (
+	leftSingleQuote  = "\u2018"
+	rightSingleQuote = "\u2019"
+	leftDoubleQuote  = "\u201C"
+	rightDoubleQuote = "\u201D"
+	enDash           = "\u2013"
+	emDash           = "\u2014"
+	ellipsis         = "\u2026"
+	leftAngleQuote   = "\u00AB"
+	rightAngleQuote  = "\u00BB"
+)
+
 // parseTypographer performs smart punctuation substitutions; quotes use the
 // delimiter flanking rules plus goldmark's special cases and counters.
 func (p *inlineParser) parseTypographer(line string) *inNode {
@@ -12,25 +24,25 @@ func (p *inlineParser) parseTypographer(line string) *inNode {
 	switch {
 	case len(line) > 2 && c == '-' && line[1] == '-' && line[2] == '-':
 		p.pos += 3
-		return p.newNode(inNode{kind: nLit, str: "&mdash;"})
+		return p.newNode(inNode{kind: nLit, str: emDash})
 	case len(line) > 2 && c == '.' && line[1] == '.' && line[2] == '.':
 		p.pos += 3
-		return p.newNode(inNode{kind: nLit, str: "&hellip;"})
+		return p.newNode(inNode{kind: nLit, str: ellipsis})
 	case len(line) > 2 && c == '.':
 		return nil
 	case len(line) > 1 && c == '<' && line[1] == '<':
 		p.pos += 2
-		return p.newNode(inNode{kind: nLit, str: "&laquo;"})
+		return p.newNode(inNode{kind: nLit, str: leftAngleQuote})
 	case len(line) > 1 && c == '<':
 		return nil
 	case len(line) > 1 && c == '>' && line[1] == '>':
 		p.pos += 2
-		return p.newNode(inNode{kind: nLit, str: "&raquo;"})
+		return p.newNode(inNode{kind: nLit, str: rightAngleQuote})
 	case len(line) > 1 && c == '>':
 		return nil
 	case len(line) > 1 && c == '-' && line[1] == '-':
 		p.pos += 2
-		return p.newNode(inNode{kind: nLit, str: "&ndash;"})
+		return p.newNode(inNode{kind: nLit, str: enDash})
 	case c == '\'':
 		return p.typographerSingleQuote(line)
 	case c == '"':
@@ -62,12 +74,12 @@ func (p *inlineParser) singleQuoteContraction(line string, before rune, d *delim
 	// Special cases: 'twas, 'em, 'net, 'll.
 	if len(line) > 1 && (unicode.IsPunct(before) || unicode.IsSpace(before)) &&
 		(line[1] == 't' || line[1] == 'e' || line[1] == 'n' || line[1] == 'l') {
-		return p.quote("&rsquo;", 0)
+		return p.quote(rightSingleQuote, 0)
 	}
 	// Apostrophes between alphanumerics.
 	if len(line) > 1 && (unicode.IsDigit(before) || unicode.IsLetter(before)) {
 		if r, _ := utf8.DecodeRuneInString(line[1:]); unicode.IsLetter(r) {
-			return p.quote("&rsquo;", 0)
+			return p.quote(rightSingleQuote, 0)
 		}
 	}
 	return nil
@@ -84,7 +96,7 @@ func (p *inlineParser) singleQuoteDecade(line string, d *delimiter) *inNode {
 		after, _ = utf8.DecodeRuneInString(line[4:])
 	}
 	if isSpaceRune(after) || isPunctRune(after) {
-		return p.quote("&rsquo;", 0)
+		return p.quote(rightSingleQuote, 0)
 	}
 	return nil
 }
@@ -92,17 +104,17 @@ func (p *inlineParser) singleQuoteDecade(line string, d *delimiter) *inNode {
 // singleQuoteOpening renders a single quote that opens a quotation, using
 // the apostrophe form for common contraction suffixes.
 func (p *inlineParser) singleQuoteOpening(line string) *inNode {
-	nt := "&lsquo;"
+	nt := leftSingleQuote
 	// Special cases: Alice's, I'm, Don't, You'd.
 	if len(line) > 1 && (line[1] == 's' || line[1] == 'm' || line[1] == 't' || line[1] == 'd') &&
 		(len(line) < 3 || isPunctByte(line[2]) || isSpaceByte(line[2])) {
-		nt = "&rsquo;"
+		nt = rightSingleQuote
 	}
 	// Special cases: I've, I'll, You're.
 	if len(line) > 2 && ((line[1] == 'v' && line[2] == 'e') ||
 		(line[1] == 'l' && line[2] == 'l') || (line[1] == 'r' && line[2] == 'e')) &&
 		(len(line) < 4 || isPunctByte(line[3]) || isSpaceByte(line[3])) {
-		nt = "&rsquo;"
+		nt = rightSingleQuote
 	}
 	return p.quote(nt, p.delta(nt))
 }
@@ -113,7 +125,7 @@ func (p *inlineParser) singleQuoteClosing(line string, d *delimiter) *inNode {
 	// Plural possessives and abbreviations: Smiths', doin'.
 	if len(line) > 1 && unicode.IsSpace(firstRune(line)) ||
 		unicode.IsPunct(firstRune(line)) && (len(line) > 2 && !unicode.IsDigit(firstRune(line[1:]))) {
-		return p.quote("&rsquo;", 0)
+		return p.quote(rightSingleQuote, 0)
 	}
 	if p.quoteSingle <= 0 {
 		return nil
@@ -122,7 +134,7 @@ func (p *inlineParser) singleQuoteClosing(line string, d *delimiter) *inNode {
 	maybeClose := d.canClose && d.canOpen && len(line) > 1 && unicode.IsPunct(firstRune(line[1:])) &&
 		(len(line) == 2 || len(line) > 2 && (isPunctByte(line[2]) || isSpaceByte(line[2])))
 	if isClose || maybeClose {
-		return p.quote("&rsquo;", -1)
+		return p.quote(rightSingleQuote, -1)
 	}
 	return nil
 }
@@ -133,7 +145,7 @@ func (p *inlineParser) typographerDoubleQuote(line string) *inNode {
 		return nil
 	}
 	if d.canOpen && !d.canClose {
-		return p.quote("&ldquo;", 1)
+		return p.quote(leftDoubleQuote, 1)
 	}
 	if p.quoteDouble > 0 {
 		isClose := d.canClose && !d.canOpen
@@ -144,22 +156,22 @@ func (p *inlineParser) typographerDoubleQuote(line string) *inNode {
 			if len(line) > 1 && line[1] == '"' && unicode.IsDigit(before) {
 				return nil
 			}
-			return p.quote("&rdquo;", -1)
+			return p.quote(rightDoubleQuote, -1)
 		}
 	}
 	return nil
 }
-func (p *inlineParser) quote(entity string, delta int) *inNode {
-	if entity == "&lsquo;" || entity == "&rsquo;" {
+func (p *inlineParser) quote(mark string, delta int) *inNode {
+	if mark == leftSingleQuote || mark == rightSingleQuote {
 		p.quoteSingle += delta
 	} else {
 		p.quoteDouble += delta
 	}
 	p.pos++
-	return p.newNode(inNode{kind: nLit, str: entity})
+	return p.newNode(inNode{kind: nLit, str: mark})
 }
 func (p *inlineParser) delta(nt string) int {
-	if nt == "&lsquo;" {
+	if nt == leftSingleQuote {
 		return 1
 	}
 	return 0

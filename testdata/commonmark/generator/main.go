@@ -15,7 +15,6 @@ import (
 
 	stdhtml "html"
 
-	"github.com/yuin/goldmark/v2"
 	"github.com/yuin/goldmark/v2/ast"
 	"github.com/yuin/goldmark/v2/extension"
 	"github.com/yuin/goldmark/v2/parser"
@@ -178,7 +177,7 @@ func generate(dir string, specs []specExample) (*manifest, []string, error) {
 		SpecVersion:  specVer,
 		License:      "CC-BY-SA-4.0",
 		LicenseURL:   "https://creativecommons.org/licenses/by-sa/4.0/",
-		Variant: "goldmark v1.8.5 with typographer, tables, strikethrough, " +
+		Variant: "goldmark v2.0.2 with typographer, tables, strikethrough, " +
 			"linkify, footnotes, auto heading IDs and unsafe HTML; the " +
 			"indented code block parser is disabled",
 		Generator: "testdata/commonmark/generator (go run .)",
@@ -219,7 +218,7 @@ func generate(dir string, specs []specExample) (*manifest, []string, error) {
 }
 
 func buildEntry(
-	dir string, site goldmark.Markdown, overrides map[int]string, sp *specExample,
+	dir string, site markdown, overrides map[int]string, sp *specExample,
 ) (*manifestEntry, string, error) {
 	fl, constructs := classify(sp.Markdown)
 	rs := fl.reasons()
@@ -244,7 +243,7 @@ func buildEntry(
 }
 
 func writeIncluded(
-	dir string, site goldmark.Markdown, overrides map[int]string,
+	dir string, site markdown, overrides map[int]string,
 	sp *specExample, constructs []string, entry *manifestEntry,
 ) (string, error) {
 	entry.MarkdownFile = fmt.Sprintf("examples/%03d.md", sp.Example)
@@ -418,9 +417,23 @@ func loadOverrides(corpusDir string) (map[int]string, error) {
 	return overrides, nil
 }
 
-func render(md goldmark.Markdown, src string) (string, error) {
+// markdown pairs a goldmark parser with the HTML renderer for its output.
+type markdown struct {
+	parser   parser.Parser
+	renderer gmhtml.Renderer
+}
+
+func defaultGoldmark() markdown {
+	return markdown{
+		parser:   parser.New(),
+		renderer: gmhtml.New(),
+	}
+}
+
+func render(md markdown, src string) (string, error) {
 	var buf bytes.Buffer
-	if err := md.Convert([]byte(src), &buf); err != nil {
+	doc := md.parser.ParseStringSource(src)
+	if err := md.renderer.RenderStringSource(&buf, src, doc); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -429,35 +442,59 @@ func render(md goldmark.Markdown, src string) (string, error) {
 // siteGoldmark mirrors the chameth.com rendering: default parsers minus the
 // indented code block parser, with the site extensions, auto heading IDs
 // and unsafe HTML.
-func siteGoldmark() goldmark.Markdown {
-	defaults := parser.DefaultBlockParsers()
-	codeBlock := parser.NewCodeBlockParser()
-	var blockParsers []util.PrioritizedValue
-	for _, bp := range defaults {
-		if bp.Value == codeBlock {
-			continue
-		}
-		blockParsers = append(blockParsers, bp)
-	}
-	if len(blockParsers) != len(defaults)-1 {
-		panic("failed to remove the indented code block parser")
-	}
-	return goldmark.New(
-		goldmark.WithParser(parser.NewParser(
-			parser.WithBlockParsers(blockParsers...),
-			parser.WithInlineParsers(parser.DefaultInlineParsers()...),
-			parser.WithParagraphTransformers(parser.DefaultParagraphTransformers()...),
-			parser.WithAutoHeadingID(),
-		)),
-		goldmark.WithRendererOptions(gmhtml.WithUnsafe()),
-		goldmark.WithExtensions(
-			extension.Typographer,
-			extension.Table,
-			extension.Strikethrough,
-			extension.Linkify,
-			extension.Footnote,
+func siteGoldmark() markdown {
+	return markdown{
+		parser: parser.New(
+			parser.WithDefaultParsers(false),
+			parser.WithExtensions(
+				commonMarkWithoutCodeBlocks{},
+				extension.TypographerParser,
+				extension.TableParser,
+				extension.StrikethroughParser,
+				extension.LinkifyParser,
+				extension.FootnoteParser,
+			),
 		),
-	)
+		renderer: gmhtml.New(
+			gmhtml.WithUnsafe(),
+			gmhtml.WithExtensions(
+				extension.TableHTMLRenderer,
+				extension.StrikethroughHTMLRenderer,
+				extension.FootnoteHTMLRenderer,
+			),
+		),
+	}
+}
+
+// commonMarkWithoutCodeBlocks mirrors parser.CommonMark but leaves out the
+// indented code block parser.
+type commonMarkWithoutCodeBlocks struct{}
+
+func (commonMarkWithoutCodeBlocks) ParserOptions(*parser.Config) []parser.Option {
+	heading := parser.WithAutoHeadingID()
+	return []parser.Option{
+		parser.WithBlockParsers(
+			util.Prioritized(parser.NewSetextHeadingParser(heading), 100),
+			util.Prioritized(parser.NewThematicBreakParser(), 200),
+			util.Prioritized(parser.NewListParser(), 300),
+			util.Prioritized(parser.NewListItemParser(), 400),
+			util.Prioritized(parser.NewATXHeadingParser(heading), 600),
+			util.Prioritized(parser.NewFencedCodeBlockParser(), 700),
+			util.Prioritized(parser.NewBlockquoteParser(), 800),
+			util.Prioritized(parser.NewHTMLBlockParser(), 900),
+			util.Prioritized(parser.NewParagraphParser(), 1000),
+		),
+		parser.WithInlineParsers(
+			util.Prioritized(parser.NewCodeSpanParser(), 100),
+			util.Prioritized(parser.NewLinkParser(), 200),
+			util.Prioritized(parser.NewAutoLinkParser(), 300),
+			util.Prioritized(parser.NewRawHTMLParser(), 400),
+			util.Prioritized(parser.NewEmphasisParser(), 500),
+		),
+		parser.WithParagraphTransformers(
+			util.Prioritized(parser.LinkReferenceParagraphTransformer, 100),
+		),
+	}
 }
 
 func classify(src string) (flags, []string) {
@@ -466,11 +503,11 @@ func classify(src string) (flags, []string) {
 
 	srcBytes := []byte(src)
 	ctx := parser.NewContext()
-	doc := goldmark.New().Parser().Parse(text.NewReader(srcBytes), parser.WithContext(ctx))
+	doc := parser.New().Parse(srcBytes, parser.WithContext(ctx))
 	// Definitions consumed during parsing are registered in the parse
 	// context even where their AST nodes are not retained; count them
 	// directly so no definition can escape classification.
-	if len(ctx.References()) > 0 {
+	if len(ctx.LinkDefinitions()) > 0 {
 		f.refDefinition = true
 	}
 
@@ -503,7 +540,11 @@ func walkNodes(
 		}
 		switch n.Kind() {
 		case ast.KindCodeBlock:
-			f.indentedCode = true
+			if n.(*ast.CodeBlock).CodeBlockKind == ast.CodeBlockKindIndented {
+				f.indentedCode = true
+			} else {
+				*constructs = append(*constructs, "fenced code block")
+			}
 		case ast.KindImage:
 			f.image = true
 			*constructs = append(*constructs, "image")
@@ -514,18 +555,16 @@ func walkNodes(
 		case ast.KindLinkReferenceDefinition:
 			f.refDefinition = true
 		case ast.KindHeading:
-			if n.Lines().Len() > 0 {
-				line := decontainer(string(lineAt(srcBytes, starts, lineOf(n.Lines().At(0).Start))))
+			if segs := blockSegments(n); len(segs) > 0 {
+				line := decontainer(string(lineAt(srcBytes, starts, lineOf(segs[0].Start))))
 				classifyHeading(line, f, constructs)
 			}
 		case ast.KindThematicBreak:
 			hasBreak = true
 			*constructs = append(*constructs, "thematic break")
-		case ast.KindFencedCodeBlock:
-			*constructs = append(*constructs, "fenced code block")
 		case ast.KindCodeSpan:
 			*constructs = append(*constructs, "code span")
-		case ast.KindEmphasis:
+		case ast.KindEmphasis, ast.KindStrong:
 			*constructs = append(*constructs, "emphasis")
 		case ast.KindBlockquote:
 			*constructs = append(*constructs, "block quote")
@@ -536,14 +575,27 @@ func walkNodes(
 		case ast.KindRawHTML:
 			*constructs = append(*constructs, "inline HTML")
 		}
-		if n.Type() == ast.TypeBlock {
-			for i := range n.Lines().Len() {
-				covered[lineOf(n.Lines().At(i).Start)] = true
-			}
+		for _, seg := range blockSegments(n) {
+			covered[lineOf(seg.Start)] = true
 		}
 		return ast.WalkContinue, nil
 	})
 	return covered, hasBreak
+}
+
+// blockSegments returns the source lines a block node holds: the raw
+// content of code and HTML blocks, or the inline source of other blocks.
+// Inline nodes hold none.
+func blockSegments(n ast.Node) []text.Segment {
+	switch b := n.(type) {
+	case *ast.CodeBlock:
+		return b.Value.Segments()
+	case *ast.HTMLBlock:
+		return b.Value.Segments()
+	case ast.BlockNode:
+		return b.Source()
+	}
+	return nil
 }
 
 func classifyHeading(line string, f *flags, constructs *[]string) {
@@ -641,7 +693,7 @@ func decontainer(line string) string {
 // goldmark (which never drops content), comparing normalised text. A
 // non-empty result names the content missing from the site rendering.
 func dropCheck(src, siteHTML string) string {
-	defHTML, err := render(goldmark.New(), src)
+	defHTML, err := render(defaultGoldmark(), src)
 	if err != nil {
 		return fmt.Sprintf("default render failed: %v", err)
 	}

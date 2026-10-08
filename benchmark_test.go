@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"chameth.com/cfm"
-	"github.com/yuin/goldmark/v2"
 	"github.com/yuin/goldmark/v2/extension"
 	"github.com/yuin/goldmark/v2/parser"
 	"github.com/yuin/goldmark/v2/renderer/html"
+	"github.com/yuin/goldmark/v2/util"
 )
 
 var benchFixtures = []string{
@@ -67,40 +67,76 @@ func BenchmarkMarkdown(b *testing.B) {
 	}
 }
 
-type disableCodeBlocks struct{}
-
-func (disableCodeBlocks) SetParserOption(config *parser.Config) {
-	config.BlockParsers = config.BlockParsers.Remove(parser.NewCodeBlockParser())
+type goldmarkReference struct {
+	parser   parser.Parser
+	renderer html.Renderer
 }
 
-func newGoldmark() goldmark.Markdown {
-	return goldmark.New(
-		goldmark.WithExtensions(
-			extension.Typographer,
-			extension.Table,
-			extension.Strikethrough,
-			extension.Linkify,
-			extension.Footnote,
+// commonMarkWithoutCodeBlocks mirrors parser.CommonMark but leaves out the
+// indented code block parser, which cfm does not support.
+type commonMarkWithoutCodeBlocks struct{}
+
+func (commonMarkWithoutCodeBlocks) ParserOptions(*parser.Config) []parser.Option {
+	heading := parser.WithAutoHeadingID()
+	return []parser.Option{
+		parser.WithBlockParsers(
+			util.Prioritized(parser.NewSetextHeadingParser(heading), 100),
+			util.Prioritized(parser.NewThematicBreakParser(), 200),
+			util.Prioritized(parser.NewListParser(), 300),
+			util.Prioritized(parser.NewListItemParser(), 400),
+			util.Prioritized(parser.NewATXHeadingParser(heading), 600),
+			util.Prioritized(parser.NewFencedCodeBlockParser(), 700),
+			util.Prioritized(parser.NewBlockquoteParser(), 800),
+			util.Prioritized(parser.NewHTMLBlockParser(), 900),
+			util.Prioritized(parser.NewParagraphParser(), 1000),
 		),
-		goldmark.WithParserOptions(
-			parser.WithAutoHeadingID(),
-			disableCodeBlocks{},
+		parser.WithInlineParsers(
+			util.Prioritized(parser.NewCodeSpanParser(), 100),
+			util.Prioritized(parser.NewLinkParser(), 200),
+			util.Prioritized(parser.NewAutoLinkParser(), 300),
+			util.Prioritized(parser.NewRawHTMLParser(), 400),
+			util.Prioritized(parser.NewEmphasisParser(), 500),
 		),
-		goldmark.WithRendererOptions(
+		parser.WithParagraphTransformers(
+			util.Prioritized(parser.LinkReferenceParagraphTransformer, 100),
+		),
+	}
+}
+
+func newGoldmark() goldmarkReference {
+	return goldmarkReference{
+		parser: parser.New(
+			parser.WithDefaultParsers(false),
+			parser.WithExtensions(
+				commonMarkWithoutCodeBlocks{},
+				extension.TypographerParser,
+				extension.TableParser,
+				extension.StrikethroughParser,
+				extension.LinkifyParser,
+				extension.FootnoteParser,
+			),
+		),
+		renderer: html.New(
 			html.WithUnsafe(),
+			html.WithExtensions(
+				extension.TableHTMLRenderer,
+				extension.StrikethroughHTMLRenderer,
+				extension.FootnoteHTMLRenderer,
+			),
 		),
-	)
+	}
 }
 
-func goldmarkConvert(md goldmark.Markdown, input string) (string, error) {
+func goldmarkConvert(md goldmarkReference, input string) (string, error) {
 	var out strings.Builder
-	if err := md.Convert([]byte(input), &out); err != nil {
+	doc := md.parser.ParseStringSource(input)
+	if err := md.renderer.RenderStringSource(&out, input, doc); err != nil {
 		return "", err
 	}
 	return out.String(), nil
 }
 
-func workloadDiagnostic(md goldmark.Markdown, name, input string) string {
+func workloadDiagnostic(md goldmarkReference, name, input string) string {
 	want, err := goldmarkConvert(md, input)
 	if err != nil {
 		return fmt.Sprintf("testdata/bench/%s: goldmark failed: %v", name, err)

@@ -33,7 +33,7 @@ project source, not part of the licensed corpus.
   where it differs from the spec HTML (recorded per example as
   `adapted_html` in the manifest)
 - `generator/` — self-contained Go module (own `go.mod`, pins goldmark
-  v1.8.5) that classifies, renders and writes everything above
+  v2.0.2) that classifies, renders and writes everything above
 - `overrides/NNN.html` — hand-authored expectations, keyed by spec example
   number, for included examples whose desired rendering is a deliberate
   decision the site goldmark variant does not produce on its own:
@@ -64,7 +64,7 @@ consumed definitions cannot escape detection.
 ## Expected HTML
 
 The spec HTML in `examples/NNN.html` is the upstream expectation. The
-chameth.com renderer uses goldmark v1.8.5 with typographer, tables,
+chameth.com renderer uses goldmark v2.0.2 with typographer, tables,
 strikethrough, linkify, footnotes, auto heading IDs and unsafe (raw) HTML,
 with the indented code block parser disabled. Where that rendering differs
 from the spec HTML (heading IDs, `<br>`/`<hr>` without XHTML self-closing,

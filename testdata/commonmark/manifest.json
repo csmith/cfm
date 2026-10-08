@@ -4,7 +4,7 @@
   "spec_version": "0.31.2",
   "license": "CC-BY-SA-4.0",
   "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
-  "site_variant": "goldmark v1.8.5 with typographer, tables, strikethrough, linkify, footnotes, auto heading IDs and unsafe HTML; the indented code block parser is disabled",
+  "site_variant": "goldmark v2.0.2 with typographer, tables, strikethrough, linkify, footnotes, auto heading IDs and unsafe HTML; the indented code block parser is disabled",
   "generator": "testdata/commonmark/generator (go run .)",
   "total_examples": 652,
   "included_examples": 482,

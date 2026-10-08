@@ -5,7 +5,7 @@ HTML in `NNN-name.html`; `markdown_test.go` renders each pair as an individual
 subtest and compares byte for byte.
 
 Except for the hand-authored 9xx series, fixtures were generated with Goldmark
-v1.8.5 configured like the site renderer: Typographer, Table, Strikethrough,
+v2.0.2 configured like the site renderer: Typographer, Table, Strikethrough,
 Linkify and Footnote extensions, automatic heading IDs, unsafe HTML, and the
 indented code block parser removed (no Chroma). Regenerate with:
 
