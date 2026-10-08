@@ -42,23 +42,38 @@ func TestCommonMark(t *testing.T) {
 	require.NotEmpty(t, upstream)
 	assert.Equal(t, len(upstream), manifest.Total, "the manifest must cover the upstream corpus")
 	require.Positive(t, manifest.IncludedCount, "the corpus must exercise the parser")
-	assert.Len(t, manifest.Examples, manifest.Total,
-		"the manifest must account for every CommonMark example")
+	assert.Len(
+		t,
+		manifest.Examples,
+		manifest.Total,
+		"the manifest must account for every CommonMark example",
+	)
 
 	included, adapted := validateCommonMarkManifest(t, manifest)
-	assert.Equal(t, manifest.IncludedCount, included,
-		"included_examples must match the listed included entries")
-	assert.Equal(t, manifest.AdaptedCount, adapted,
-		"adapted_examples must match the listed adapted entries")
+	assert.Equal(
+		t,
+		manifest.IncludedCount,
+		included,
+		"included_examples must match the listed included entries",
+	)
+	assert.Equal(
+		t,
+		manifest.AdaptedCount,
+		adapted,
+		"adapted_examples must match the listed adapted entries",
+	)
 
 	corpus := filepath.Join("testdata", "commonmark")
 	for _, entry := range manifest.Examples {
 		if !entry.Included {
 			continue
 		}
-		t.Run(fmt.Sprintf("%03d %s", entry.Example, entry.Section), func(t *testing.T) {
-			runCommonMarkExample(t, corpus, entry)
-		})
+		t.Run(
+			fmt.Sprintf("%03d %s", entry.Example, entry.Section),
+			func(t *testing.T) {
+				runCommonMarkExample(t, corpus, entry)
+			},
+		)
 	}
 }
 
@@ -70,14 +85,22 @@ func validateCommonMarkManifest(t *testing.T, manifest commonMarkManifest) (incl
 		assert.GreaterOrEqual(t, entry.Example, 1, "example number out of range")
 		assert.LessOrEqual(t, entry.Example, manifest.Total, "example number out of range")
 		if !entry.Included {
-			assert.NotEmpty(t, entry.ExcludedReason,
-				"excluded example %d must record a reason", entry.Example)
+			assert.NotEmpty(
+				t,
+				entry.ExcludedReason,
+				"excluded example %d must record a reason",
+				entry.Example,
+			)
 			assert.False(t, entry.Adapted, "adapted example %d must be included", entry.Example)
 			continue
 		}
 		included++
-		assert.Empty(t, entry.ExcludedReason,
-			"included example %d must not carry an exclusion reason", entry.Example)
+		assert.Empty(
+			t,
+			entry.ExcludedReason,
+			"included example %d must not carry an exclusion reason",
+			entry.Example,
+		)
 		if entry.Adapted {
 			adapted++
 		}
@@ -97,7 +120,13 @@ func runCommonMarkExample(t *testing.T, corpus string, entry commonMarkEntry) {
 	}
 	want, err := os.ReadFile(filepath.Join(corpus, wantFile))
 	require.NoError(t, err, "read expectation")
-	assert.Equal(t, string(want), Markdown(string(markdown)),
+	assert.Equal(
+		t,
+		string(want),
+		Markdown(string(markdown)),
 		"spec example %d (%s, expectation from %s)",
-		entry.Example, entry.Section, entry.ExpectedSource)
+		entry.Example,
+		entry.Section,
+		entry.ExpectedSource,
+	)
 }

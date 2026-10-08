@@ -17,9 +17,12 @@ func renderBlocks(source string, inline func(string, bool) string) string {
 
 func renderBlockFixture(t *testing.T, source string) string {
 	t.Helper()
-	return renderBlocks(source, func(s string, _ bool) string {
-		return escapeHTML(s)
-	})
+	return renderBlocks(
+		source,
+		func(s string, _ bool) string {
+			return escapeHTML(s)
+		},
+	)
 
 }
 
@@ -40,18 +43,24 @@ func TestBlockParagraphs(t *testing.T) {
 		{"trailing whitespace only line splits", "one\n  \ntwo", "<p>one</p>\n<p>two</p>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
 func TestBlockParagraphBoundaryPreservesTrailingSpaces(t *testing.T) {
 	var got []string
-	out := renderBlocks("one  \ntwo  \n", func(s string, _ bool) string {
-		got = append(got, s)
-		return escapeHTML(s)
-	})
+	out := renderBlocks(
+		"one  \ntwo  \n",
+		func(s string, _ bool) string {
+			got = append(got, s)
+			return escapeHTML(s)
+		},
+	)
 
 	assert.Equal(t, "<p>one  \ntwo</p>\n", out)
 	require.Len(t, got, 1)
@@ -106,9 +115,12 @@ func TestBlockHeadings(t *testing.T) {
 		{"ids registered from quotes", "> # Solo", "<blockquote>\n<h1 id=\"solo\">Solo</h1>\n</blockquote>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -133,9 +145,12 @@ func TestBlockThematicBreaks(t *testing.T) {
 		{"inside list item", "- foo\n  ---", "<ul>\n<li>foo\n<hr>\n</li>\n</ul>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -191,9 +206,12 @@ func TestBlockFences(t *testing.T) {
 				"</code></pre>\n</li>\n<li>\n<p>next item</p>\n</li>\n</ul>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -229,9 +247,12 @@ func TestBlockHTML(t *testing.T) {
 		{"type six ends at blank", "<div>\nline\n\npara", "<div>\nline\n<p>para</p>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -333,9 +354,12 @@ func TestBlockLists(t *testing.T) {
 		{"quote interrupted by heading", "- foo\n# heading", "<ul>\n<li>foo</li>\n</ul>\n<h1 id=\"heading\">heading</h1>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -371,9 +395,12 @@ func TestBlockQuotes(t *testing.T) {
 		{"blank closes quote", "> a\n\nb", "<blockquote>\n<p>a</p>\n</blockquote>\n<p>b</p>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -391,28 +418,37 @@ func TestBlockIndentedRecognition(t *testing.T) {
 			"<pre><code class=\"language-go\">fmt.Println(&quot;hi&quot;)\n</code></pre>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
 func TestBlockInlineBoundary(t *testing.T) {
 	calls := 0
-	out := renderBlocks("para one\n\n# Head\n", func(s string, _ bool) string {
-		calls++
-		return "<" + s + ">"
-	})
+	out := renderBlocks(
+		"para one\n\n# Head\n",
+		func(s string, _ bool) string {
+			calls++
+			return "<" + s + ">"
+		},
+	)
 
 	assert.Equal(t, "<p><para one></p>\n<h1 id=\"head\"><Head></h1>\n", out)
 	assert.Equal(t, 2, calls)
 
 	// Fenced code and raw HTML never reach the inline callback.
 	calls = 0
-	out = renderBlocks("```go\nx()\n```\n\n<div>\ny\n</div>\n", func(s string, _ bool) string {
-		calls++
-		return escapeHTML(s)
-	})
+	out = renderBlocks(
+		"```go\nx()\n```\n\n<div>\ny\n</div>\n",
+		func(s string, _ bool) string {
+			calls++
+			return escapeHTML(s)
+		},
+	)
 
 	assert.Equal(t, "<pre><code class=\"language-go\">x()\n</code></pre>\n<div>\ny\n</div>\n", out)
 	assert.Zero(t, calls)
@@ -470,34 +506,44 @@ func TestBlockTables(t *testing.T) {
 		{"no table without delimiter", "| just | one | row |", "<p>| just | one | row |</p>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+			},
+		)
 	}
 }
 
 func TestBlockTableInlineContext(t *testing.T) {
 	var plain, cells []string
-	out := renderBlocks("| h |\n|---|\n| c |\n\npara", func(s string, table bool) string {
-		if table {
-			cells = append(cells, s)
-		} else {
-			plain = append(plain, s)
-		}
-		return escapeHTML(s)
-	})
+	out := renderBlocks(
+		"| h |\n|---|\n| c |\n\npara",
+		func(s string, table bool) string {
+			if table {
+				cells = append(cells, s)
+			} else {
+				plain = append(plain, s)
+			}
+			return escapeHTML(s)
+		},
+	)
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"<table>\n<thead>\n<tr>\n<th>h</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>c</td>\n</tr>\n</tbody>\n"+
 			"</table>\n<p>para</p>\n",
-		out)
+		out,
+	)
 	assert.Equal(t, []string{"h", "c"}, cells)
 	assert.Equal(t, []string{"para"}, plain)
 }
 
 func TestBlockTableCellCodeSpan(t *testing.T) {
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"<table>\n<thead>\n<tr>\n<th>a</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>x | y</code></td>\n"+
 			"</tr>\n</tbody>\n</table>\n",
-		Markdown("| a |\n|---|\n| `x \\| y` |"))
+		Markdown("| a |\n|---|\n| `x \\| y` |"),
+	)
 }

@@ -38,9 +38,12 @@ func TestAPI(t *testing.T) {
 		{"indented paragraphs", "  leading\npara\n\n  leading two", "<p>leading\npara</p>\n<p>leading two</p>\n"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, cfm.Markdown(tt.source), "Markdown(%q)", tt.source)
-			assert.Equal(t, tt.want, (cfm.Renderer{}).Markdown(tt.source), "Renderer{}.Markdown(%q)", tt.source)
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, cfm.Markdown(tt.source), "Markdown(%q)", tt.source)
+				assert.Equal(t, tt.want, (cfm.Renderer{}).Markdown(tt.source), "Renderer{}.Markdown(%q)", tt.source)
+			},
+		)
 	}
 }

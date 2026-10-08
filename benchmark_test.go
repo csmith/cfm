@@ -37,33 +37,44 @@ func BenchmarkMarkdown(b *testing.B) {
 		}
 	}
 	if unfair != nil {
-		b.Fatalf("rendered outputs must match before benchmarking:\n\n%s",
-			strings.Join(unfair, "\n\n"))
+		b.Fatalf(
+			"rendered outputs must match before benchmarking:\n\n%s",
+			strings.Join(unfair, "\n\n"),
+		)
 	}
 	for _, name := range benchFixtures {
 		input := inputs[name]
-		b.Run(name, func(b *testing.B) {
-			b.Run("cfm", func(b *testing.B) {
-				b.SetBytes(int64(len(input)))
-				b.ReportAllocs()
-				for b.Loop() {
-					benchSink = cfm.Markdown(input)
-				}
-			})
-			b.Run("goldmark", func(b *testing.B) {
-				b.SetBytes(int64(len(input)))
-				b.ReportAllocs()
-				var err error
-				for b.Loop() {
-					var out string
-					out, err = goldmarkConvert(reference, input)
-					benchSink = out
-				}
-				if err != nil {
-					b.Fatal(err)
-				}
-			})
-		})
+		b.Run(
+			name,
+			func(b *testing.B) {
+				b.Run(
+					"cfm",
+					func(b *testing.B) {
+						b.SetBytes(int64(len(input)))
+						b.ReportAllocs()
+						for b.Loop() {
+							benchSink = cfm.Markdown(input)
+						}
+					},
+				)
+				b.Run(
+					"goldmark",
+					func(b *testing.B) {
+						b.SetBytes(int64(len(input)))
+						b.ReportAllocs()
+						var err error
+						for b.Loop() {
+							var out string
+							out, err = goldmarkConvert(reference, input)
+							benchSink = out
+						}
+						if err != nil {
+							b.Fatal(err)
+						}
+					},
+				)
+			},
+		)
 	}
 }
 
@@ -151,7 +162,11 @@ func workloadDiagnostic(md goldmarkReference, name, input string) string {
 	}
 	return fmt.Sprintf(
 		"testdata/bench/%s: first output difference at byte %d\n  cfm:      %q\n  goldmark: %q",
-		name, at, clip(got, at), clip(want, at))
+		name,
+		at,
+		clip(got, at),
+		clip(want, at),
+	)
 }
 
 func clip(s string, at int) string {

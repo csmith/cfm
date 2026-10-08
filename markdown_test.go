@@ -19,14 +19,23 @@ func TestSiteFixtures(t *testing.T) {
 			continue
 		}
 		base := strings.TrimSuffix(name, ".md")
-		t.Run(base, func(t *testing.T) {
-			input, err := os.ReadFile(filepath.Join("testdata", "site", name))
-			require.NoError(t, err)
-			want, err := os.ReadFile(filepath.Join("testdata", "site", base+".html"))
-			require.NoError(t, err)
-			assert.Equal(t, string(want), Markdown(string(input)),
-				"golden mismatch for testdata/site/%s against testdata/site/%s.html", name, base)
-		})
+		t.Run(
+			base,
+			func(t *testing.T) {
+				input, err := os.ReadFile(filepath.Join("testdata", "site", name))
+				require.NoError(t, err)
+				want, err := os.ReadFile(filepath.Join("testdata", "site", base+".html"))
+				require.NoError(t, err)
+				assert.Equal(
+					t,
+					string(want),
+					Markdown(string(input)),
+					"golden mismatch for testdata/site/%s against testdata/site/%s.html",
+					name,
+					base,
+				)
+			},
+		)
 	}
 }
 

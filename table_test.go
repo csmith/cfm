@@ -324,17 +324,20 @@ func TestTableParse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, consumed := parseTable(tt.lines)
-			if tt.want == nil {
-				assert.Nil(t, got)
-				assert.Zero(t, consumed)
-				return
-			}
-			require.NotNil(t, got)
-			assert.Equal(t, tt.want, got)
-			assert.Equal(t, tt.wantLines, consumed)
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				got, consumed := parseTable(tt.lines)
+				if tt.want == nil {
+					assert.Nil(t, got)
+					assert.Zero(t, consumed)
+					return
+				}
+				require.NotNil(t, got)
+				assert.Equal(t, tt.want, got)
+				assert.Equal(t, tt.wantLines, consumed)
+			},
+		)
 	}
 }
 
@@ -470,12 +473,15 @@ func TestTableRender(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			table, consumed := parseTable(tt.lines)
-			require.NotNil(t, table)
-			assert.Equal(t, len(tt.lines), consumed)
-			assert.Equal(t, tt.want, renderTable(table, escapeHTML))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				table, consumed := parseTable(tt.lines)
+				require.NotNil(t, table)
+				assert.Equal(t, len(tt.lines), consumed)
+				assert.Equal(t, tt.want, renderTable(table, escapeHTML))
+			},
+		)
 	}
 }
 
@@ -484,25 +490,36 @@ func TestTableRenderNil(t *testing.T) {
 }
 
 func TestTableRenderDelegatesInline(t *testing.T) {
-	table, _ := parseTable([]string{
-		"| Expression | Meaning |",
-		"|------------|---------|",
-		"| a \\| b | literal pipe |",
-		"| `x \\| y` | pipe in code span |",
-	})
+	table, _ := parseTable(
+		[]string{
+			"| Expression | Meaning |",
+			"|------------|---------|",
+			"| a \\| b | literal pipe |",
+			"| `x \\| y` | pipe in code span |",
+		},
+	)
 	require.NotNil(t, table)
 
 	var seen []string
-	got := renderTable(table, func(s string) string {
-		seen = append(seen, s)
-		return "[" + s + "]"
-	})
-	assert.Equal(t, []string{
-		"Expression", "Meaning",
-		"a \\| b", "literal pipe",
-		"`x \\| y`", "pipe in code span",
-	}, seen)
-	assert.Equal(t, `<table>
+	got := renderTable(
+		table,
+		func(s string) string {
+			seen = append(seen, s)
+			return "[" + s + "]"
+		},
+	)
+	assert.Equal(
+		t,
+		[]string{
+			"Expression", "Meaning",
+			"a \\| b", "literal pipe",
+			"`x \\| y`", "pipe in code span",
+		},
+		seen,
+	)
+	assert.Equal(
+		t,
+		`<table>
 <thead>
 <tr>
 <th>[Expression]</th>
@@ -520,5 +537,7 @@ func TestTableRenderDelegatesInline(t *testing.T) {
 </tr>
 </tbody>
 </table>
-`, got)
+`,
+		got,
+	)
 }

@@ -46,9 +46,12 @@ func TestEmphasis(t *testing.T) {
 		{"adjacent pair", "foo_bar_baz", "foo_bar_baz"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -69,9 +72,12 @@ func TestStrikethrough(t *testing.T) {
 		{"leading tilde run", "a~~b", "a~~b"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -98,9 +104,12 @@ func TestCodeSpans(t *testing.T) {
 		{"double backslash literal", "`a\\\\|b`", "<code>a\\\\|b</code>"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -125,9 +134,12 @@ func TestTableCodeSpans(t *testing.T) {
 		{"emphasis around escaped pipe", "*x \\| y*", "<em>x | y</em>"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, renderTableCell(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, renderTableCell(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -146,9 +158,12 @@ func TestEscapes(t *testing.T) {
 		{"escaped hash", "\\# not heading", "# not heading"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -174,9 +189,12 @@ func TestEntities(t *testing.T) {
 		{"entity in code span", "`&copy;` stays", "<code>&amp;copy;</code> stays"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -198,9 +216,12 @@ func TestLineBreaks(t *testing.T) {
 		{"multi paragraph shape", "one\ntwo\n\nthree", "one\ntwo\n\nthree"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -246,9 +267,12 @@ func TestInlineLinks(t *testing.T) {
 		{"angle dest gt", "[a](<b)c>)", `<a href="b)c">a</a>`},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -267,9 +291,12 @@ func TestImagesLiteral(t *testing.T) {
 		{"bang bracket not image", "![unclosed", "![unclosed"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -288,9 +315,12 @@ func TestAutolinks(t *testing.T) {
 		{"loose attributes match goldmark", "<not a link>", "<not a link>"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -327,9 +357,12 @@ func TestLinkify(t *testing.T) {
 			`u (<a href="https://e.io/a(b)">https://e.io/a(b)</a>) done`},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -354,9 +387,12 @@ func TestRawHTML(t *testing.T) {
 			"foo…bar..x.–y—z«w»v"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -388,9 +424,12 @@ func TestTypography(t *testing.T) {
 		{"caret unaffected", "a ^ b", "a ^ b"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -407,9 +446,12 @@ func TestTextEscaping(t *testing.T) {
 		{"nbsp preserved", "a\u00a0b", "a\u00a0b"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -423,30 +465,54 @@ func TestFootnoteReferences(t *testing.T) {
 		}
 		return "", false
 	}}
-	t.Run("defined reference", func(t *testing.T) {
-		assert.Equal(t, "A statement"+sup("1")+".", renderInline("A statement[^1].", ctx))
-	})
-	t.Run("undefined literal", func(t *testing.T) {
-		assert.Equal(t, "Unknown note[^99] stays literal.", renderInline("Unknown note[^99] stays literal.", ctx))
-	})
-	t.Run("nil context literal", func(t *testing.T) {
-		assert.Equal(t, "note[^1] here", render(t, "note[^1] here"))
-	})
-	t.Run("image bang stays", func(t *testing.T) {
-		assert.Equal(t, "!"+sup("1")+" img", renderInline("![^1] img", ctx))
-	})
-	t.Run("image undefined literal", func(t *testing.T) {
-		assert.Equal(t, "![^9] img", renderInline("![^9] img", ctx))
-	})
-	t.Run("reference wins over link", func(t *testing.T) {
-		assert.Equal(t, sup("1")+"(/x)", renderInline("[^1](/x)", ctx))
-	})
-	t.Run("label with escape", func(t *testing.T) {
-		assert.Equal(t, "note[^1] x", renderInline("note[^1\\] x", ctx))
-	})
-	t.Run("inside emphasis", func(t *testing.T) {
-		assert.Equal(t, "<em>a "+sup("1")+" b</em>", renderInline("*a [^1] b*", ctx))
-	})
+	t.Run(
+		"defined reference",
+		func(t *testing.T) {
+			assert.Equal(t, "A statement"+sup("1")+".", renderInline("A statement[^1].", ctx))
+		},
+	)
+	t.Run(
+		"undefined literal",
+		func(t *testing.T) {
+			assert.Equal(t, "Unknown note[^99] stays literal.", renderInline("Unknown note[^99] stays literal.", ctx))
+		},
+	)
+	t.Run(
+		"nil context literal",
+		func(t *testing.T) {
+			assert.Equal(t, "note[^1] here", render(t, "note[^1] here"))
+		},
+	)
+	t.Run(
+		"image bang stays",
+		func(t *testing.T) {
+			assert.Equal(t, "!"+sup("1")+" img", renderInline("![^1] img", ctx))
+		},
+	)
+	t.Run(
+		"image undefined literal",
+		func(t *testing.T) {
+			assert.Equal(t, "![^9] img", renderInline("![^9] img", ctx))
+		},
+	)
+	t.Run(
+		"reference wins over link",
+		func(t *testing.T) {
+			assert.Equal(t, sup("1")+"(/x)", renderInline("[^1](/x)", ctx))
+		},
+	)
+	t.Run(
+		"label with escape",
+		func(t *testing.T) {
+			assert.Equal(t, "note[^1] x", renderInline("note[^1\\] x", ctx))
+		},
+	)
+	t.Run(
+		"inside emphasis",
+		func(t *testing.T) {
+			assert.Equal(t, "<em>a "+sup("1")+" b</em>", renderInline("*a [^1] b*", ctx))
+		},
+	)
 }
 
 func TestPrecedence(t *testing.T) {
@@ -462,9 +528,12 @@ func TestPrecedence(t *testing.T) {
 		{"backslash in url", "[a](/x\\)y)", `<a href="/x)y">a</a>`},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, render(t, tt.source))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				assert.Equal(t, tt.want, render(t, tt.source))
+			},
+		)
 	}
 }
 
@@ -499,12 +568,14 @@ func FuzzRenderInline(f *testing.F) {
 		f.Add(seed)
 	}
 	ctx := &inlineContext{table: true}
-	f.Fuzz(func(t *testing.T, source string) {
-		plain := renderInline(source, nil)
-		assert.Equal(t, plain, renderInline(source, nil))
-		assert.NotContains(t, plain, "\x00")
-		assert.NotPanics(t, func() { _ = renderInline(source, ctx) })
-	})
+	f.Fuzz(
+		func(t *testing.T, source string) {
+			plain := renderInline(source, nil)
+			assert.Equal(t, plain, renderInline(source, nil))
+			assert.NotContains(t, plain, "\x00")
+			assert.NotPanics(t, func() { _ = renderInline(source, ctx) })
+		},
+	)
 }
 
 var inlineBenchSink string
@@ -519,18 +590,26 @@ func BenchmarkRenderInlineParagraph(b *testing.B) {
 }
 
 var (
-	refOpenTagRe = regexp.MustCompile(`^<[A-Za-z][A-Za-z0-9-]*` +
-		`(?:[\r\n \t]+[a-zA-Z_:][a-zA-Z0-9:._-]*` +
-		`(?:[\r\n \t]*=[\r\n \t]*(?:[^"'=<>` + "`" + `\x00-\x20]+|'[^']*'|"[^"]*"))?)*` +
-		`(?:[ \t]|(?:\r\n|\n){0,1})*/?>`)
+	refOpenTagRe = regexp.MustCompile(
+		`^<[A-Za-z][A-Za-z0-9-]*` +
+			`(?:[\r\n \t]+[a-zA-Z_:][a-zA-Z0-9:._-]*` +
+			`(?:[\r\n \t]*=[\r\n \t]*(?:[^"'=<>` + "`" + `\x00-\x20]+|'[^']*'|"[^"]*"))?)*` +
+			`(?:[ \t]|(?:\r\n|\n){0,1})*/?>`,
+	)
 	refCloseTagRe = regexp.MustCompile(`^</[A-Za-z][A-Za-z0-9-]*(?:[ \t]|(?:\r\n|\n){0,1})*>`)
 
-	refLinkifyURLRe = regexp.MustCompile(`^(?:http|https|ftp)://[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]+` +
-		`(?::\d+)?(?:[/#?][-a-zA-Z0-9@:%_+.~#$!?&/=\();,'">\^{}\[\]` + "`" + `]*)?`)
-	refLinkifyWWWRe = regexp.MustCompile(`^www\.[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]+` +
-		`(?:[/#?][-a-zA-Z0-9@:%_\+.~#!?&/=\();,'">\^{}\[\]` + "`" + `]*)?`)
-	refEmailDomainRe = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?` +
-		`(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`)
+	refLinkifyURLRe = regexp.MustCompile(
+		`^(?:http|https|ftp)://[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]+` +
+			`(?::\d+)?(?:[/#?][-a-zA-Z0-9@:%_+.~#$!?&/=\();,'">\^{}\[\]` + "`" + `]*)?`,
+	)
+	refLinkifyWWWRe = regexp.MustCompile(
+		`^www\.[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-z]+` +
+			`(?:[/#?][-a-zA-Z0-9@:%_\+.~#!?&/=\();,'">\^{}\[\]` + "`" + `]*)?`,
+	)
+	refEmailDomainRe = regexp.MustCompile(
+		`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?` +
+			`(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`,
+	)
 )
 
 func TestRawTagScannerMatchesPattern(t *testing.T) {
@@ -576,17 +655,20 @@ func TestRawTagScannerMatchesPattern(t *testing.T) {
 		name: "close whitespace", source: "</a\n\n> x", closing: true,
 	}}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			re := refOpenTagRe
-			if tt.closing {
-				re = refCloseTagRe
-			}
-			want := 0
-			if loc := re.FindStringIndex(tt.source); loc != nil && loc[0] == 0 {
-				want = loc[1]
-			}
-			assert.Equal(t, want, rawTagLen(tt.source, tt.closing))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				re := refOpenTagRe
+				if tt.closing {
+					re = refCloseTagRe
+				}
+				want := 0
+				if loc := re.FindStringIndex(tt.source); loc != nil && loc[0] == 0 {
+					want = loc[1]
+				}
+				assert.Equal(t, want, rawTagLen(tt.source, tt.closing))
+			},
+		)
 	}
 }
 
@@ -624,15 +706,18 @@ func TestLinkifyScannerMatchesPattern(t *testing.T) {
 		name: "www no tld", source: `www.example/x`, want: -1, www: true,
 	}}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var got int
-			if tt.www {
-				got = linkifyWWWEnd(tt.source)
-			} else {
-				got = linkifyURLEnd(tt.source)
-			}
-			assert.Equal(t, tt.want, got)
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				var got int
+				if tt.www {
+					got = linkifyWWWEnd(tt.source)
+				} else {
+					got = linkifyURLEnd(tt.source)
+				}
+				assert.Equal(t, tt.want, got)
+			},
+		)
 	}
 }
 
@@ -655,10 +740,13 @@ func TestLinkifyDomainScannerMatchesPattern(t *testing.T) {
 		{name: "all hyphen label", source: `a@----`, want: -1},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			after := strings.IndexByte(tt.source, '@') + 1
-			assert.Equal(t, tt.want, linkifyDomainEnd(tt.source, after))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				after := strings.IndexByte(tt.source, '@') + 1
+				assert.Equal(t, tt.want, linkifyDomainEnd(tt.source, after))
+			},
+		)
 	}
 }
 
@@ -673,15 +761,17 @@ func FuzzRawTagScanner(f *testing.F) {
 	for _, s := range seeds {
 		f.Add(s)
 	}
-	f.Fuzz(func(t *testing.T, s string) {
-		// rawTagLen assumes the '<' the dispatcher already checked.
-		if strings.HasPrefix(s, "<") {
-			assert.Equal(t, refMatchLen(refOpenTagRe, s), rawTagLen(s, false))
-			if strings.HasPrefix(s, "</") {
-				assert.Equal(t, refMatchLen(refCloseTagRe, s), rawTagLen(s, true))
+	f.Fuzz(
+		func(t *testing.T, s string) {
+			// rawTagLen assumes the '<' the dispatcher already checked.
+			if strings.HasPrefix(s, "<") {
+				assert.Equal(t, refMatchLen(refOpenTagRe, s), rawTagLen(s, false))
+				if strings.HasPrefix(s, "</") {
+					assert.Equal(t, refMatchLen(refCloseTagRe, s), rawTagLen(s, true))
+				}
 			}
-		}
-	})
+		},
+	)
 }
 
 func FuzzLinkifyScanner(f *testing.F) {
@@ -696,24 +786,26 @@ func FuzzLinkifyScanner(f *testing.F) {
 	for _, s := range seeds {
 		f.Add(s)
 	}
-	f.Fuzz(func(t *testing.T, s string) {
-		want := refMatchLen(refLinkifyURLRe, s)
-		if want == 0 {
+	f.Fuzz(
+		func(t *testing.T, s string) {
+			want := refMatchLen(refLinkifyURLRe, s)
+			if want == 0 {
+				want = -1
+			}
+			assert.Equal(t, want, linkifyURLEnd(s))
+			want = refMatchLen(refLinkifyWWWRe, s)
+			if want == 0 {
+				want = -1
+			}
+			assert.Equal(t, want, linkifyWWWEnd(s))
+			end := refMatchLen(refEmailDomainRe, s)
 			want = -1
-		}
-		assert.Equal(t, want, linkifyURLEnd(s))
-		want = refMatchLen(refLinkifyWWWRe, s)
-		if want == 0 {
-			want = -1
-		}
-		assert.Equal(t, want, linkifyWWWEnd(s))
-		end := refMatchLen(refEmailDomainRe, s)
-		want = -1
-		if end > 0 {
-			want = end
-		}
-		assert.Equal(t, want, linkifyDomainEnd(s, 0))
-	})
+			if end > 0 {
+				want = end
+			}
+			assert.Equal(t, want, linkifyDomainEnd(s, 0))
+		},
+	)
 }
 
 // refMatchLen reports the length of an anchored leftmost match of re at the

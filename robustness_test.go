@@ -42,12 +42,14 @@ func FuzzMarkdown(f *testing.F) {
 	} {
 		f.Add(seed)
 	}
-	f.Fuzz(func(t *testing.T, source string) {
-		want := cfm.Markdown(source)
-		assert.Equal(t, want, cfm.Markdown(source))
-		assert.Equal(t, want, (cfm.Renderer{}).Markdown(source))
-		assert.NotContains(t, want, "\x00")
-	})
+	f.Fuzz(
+		func(t *testing.T, source string) {
+			want := cfm.Markdown(source)
+			assert.Equal(t, want, cfm.Markdown(source))
+			assert.Equal(t, want, (cfm.Renderer{}).Markdown(source))
+			assert.NotContains(t, want, "\x00")
+		},
+	)
 }
 
 const concurrentDoc = `# Overview
@@ -90,11 +92,13 @@ func TestConcurrentRendererIndependentCalls(t *testing.T) {
 	}}
 	var wg sync.WaitGroup
 	for range 8 {
-		wg.Go(func() {
-			for range 25 {
-				assert.Equal(t, concurrentWant, renderer.Markdown(concurrentDoc))
-			}
-		})
+		wg.Go(
+			func() {
+				for range 25 {
+					assert.Equal(t, concurrentWant, renderer.Markdown(concurrentDoc))
+				}
+			},
+		)
 	}
 	wg.Wait()
 }
@@ -142,11 +146,14 @@ func TestAdversarialBoundedInputs(t *testing.T) {
 			strings.Repeat("> ", 100) + "> - list item"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			want := cfm.Markdown(tt.source)
-			assert.Equal(t, want, cfm.Markdown(tt.source))
-			assert.Equal(t, want, (cfm.Renderer{}).Markdown(tt.source))
-			assert.NotContains(t, want, "\x00")
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				want := cfm.Markdown(tt.source)
+				assert.Equal(t, want, cfm.Markdown(tt.source))
+				assert.Equal(t, want, (cfm.Renderer{}).Markdown(tt.source))
+				assert.NotContains(t, want, "\x00")
+			},
+		)
 	}
 }

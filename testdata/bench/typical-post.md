@@ -57,7 +57,7 @@ func total(pages []page) int {
 }
 ```
 
-Note that the block above deliberately carries no language tag.
+Note that the block above deliberately has no language tag.
 
 ## Details worth forgetting
 
@@ -68,5 +68,5 @@ instead](#why-conversion-cost-matters) of shouting.
 
 ---
 
-That is the whole post. There will be a follow-up with numbers, and if
+That is all for this post. There will be a follow-up with numbers, and if
 history is any guide, the follow-up will itself need a follow-up.

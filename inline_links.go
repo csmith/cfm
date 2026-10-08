@@ -12,12 +12,17 @@ func (p *inlineParser) openBracket(bang bool) *inNode {
 	}
 	node := p.newNode(inNode{kind: nBracket, seg: p.src[p.pos : p.pos+n], image: bang})
 	p.appendNode(node)
-	p.brackets = append(p.brackets, p.newBracket(bracket{
-		node:    node,
-		start:   p.pos,
-		bottom:  p.lastDelim,
-		isImage: bang,
-	}))
+	p.brackets = append(
+		p.brackets,
+		p.newBracket(
+			bracket{
+				node:    node,
+				start:   p.pos,
+				bottom:  p.lastDelim,
+				isImage: bang,
+			},
+		),
+	)
 	p.pos += n
 	return node
 }

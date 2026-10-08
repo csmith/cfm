@@ -493,12 +493,14 @@ func (p *blockParser) textLine(rest, s string, w, baseCol int) {
 	}
 	if fs, ok := parseFenceStart(s); ok {
 		p.closeParagraph()
-		p.openBlock(&block{kind: blockCode, fence: &fenceBlock{
-			char:   fs.char,
-			length: fs.length,
-			indent: w,
-			lang:   fenceLanguage(fs.language),
-		}})
+		p.openBlock(
+			&block{kind: blockCode, fence: &fenceBlock{
+				char:   fs.char,
+				length: fs.length,
+				indent: w,
+				lang:   fenceLanguage(fs.language),
+			}},
+		)
 		return
 	}
 	if t := htmlBlockType(s, p.cur().kind == blockParagraph); t != 0 {
@@ -583,12 +585,16 @@ func (p *blockParser) footnoteDef(rest string) (label, body string, consumed int
 // unindented line, matching lazy continuation through closed containers. A
 // new definition start or an interrupting block ends it.
 func (p *blockParser) lazyFootnoteLine(d *footnoteDefState, line string, baseCol int) bool {
-	return lazyFootnoteBody(d, line, func(s string) bool {
-		if _, ok := newFootnoteDef(s); ok {
-			return false
-		}
-		return !p.interrupts(s, baseCol)
-	})
+	return lazyFootnoteBody(
+		d,
+		line,
+		func(s string) bool {
+			if _, ok := newFootnoteDef(s); ok {
+				return false
+			}
+			return !p.interrupts(s, baseCol)
+		},
+	)
 }
 
 // paragraphKeepsMarker reports whether a list marker that cannot start a
@@ -873,10 +879,13 @@ func (br *blockRenderer) children(b *block) {
 		if v.kind == blockFootnoteDef {
 			continue
 		}
-		br.stack = append(br.stack, renderFrame{
-			b: v, sep: hasRenderedSibling(b.children[:i]),
-			tightPara: b.kind == blockItem && b.parent.tight && v.kind == blockParagraph,
-		})
+		br.stack = append(
+			br.stack,
+			renderFrame{
+				b: v, sep: hasRenderedSibling(b.children[:i]),
+				tightPara: b.kind == blockItem && b.parent.tight && v.kind == blockParagraph,
+			},
+		)
 	}
 }
 

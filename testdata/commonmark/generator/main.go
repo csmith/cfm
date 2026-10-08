@@ -239,7 +239,9 @@ func buildEntry(
 	}
 	return entry, fmt.Sprintf(
 		"review excluded example %d (%s): markdown contains ]:",
-		sp.Example, sp.Section), nil
+		sp.Example,
+		sp.Section,
+	), nil
 }
 
 func writeIncluded(
@@ -298,12 +300,21 @@ func writeIncluded(
 		return "", nil
 	}
 	if hasOverride {
-		return fmt.Sprintf("DATA LOSS example %d (%s): %s (accepted: hand-authored override)",
-			sp.Example, sp.Section, problem), nil
+		return fmt.Sprintf(
+			"DATA LOSS example %d (%s): %s (accepted: hand-authored override)",
+			sp.Example,
+			sp.Section,
+			problem,
+		), nil
 	}
-	return "", fmt.Errorf("example %d (%s): %s; "+
-		"add a hand-authored override at overrides/%03d.html if the loss is intentional",
-		sp.Example, sp.Section, problem, sp.Example)
+	return "", fmt.Errorf(
+		"example %d (%s): %s; "+
+			"add a hand-authored override at overrides/%03d.html if the loss is intentional",
+		sp.Example,
+		sp.Section,
+		problem,
+		sp.Example,
+	)
 }
 
 func checkManifest(dir string, m *manifest, specs []specExample) error {
@@ -363,8 +374,13 @@ func writeManifest(dir string, m *manifest) error {
 }
 
 func printSummary(m *manifest, audit []string) {
-	fmt.Printf("total %d, included %d, adapted %d, excluded %d\n",
-		m.Total, m.Included, m.Adapted, m.Total-m.Included)
+	fmt.Printf(
+		"total %d, included %d, adapted %d, excluded %d\n",
+		m.Total,
+		m.Included,
+		m.Adapted,
+		m.Total-m.Included,
+	)
 	counts := map[string]int{}
 	for _, e := range m.Examples {
 		for _, r := range e.Reasons {
@@ -534,52 +550,55 @@ func walkNodes(
 	// syntax is not misclassified.
 	covered := map[int]bool{}
 	hasBreak := false
-	_ = ast.Walk(doc, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
-		if !entering {
+	_ = ast.Walk(
+		doc,
+		func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+			if !entering {
+				return ast.WalkContinue, nil
+			}
+			switch n.Kind() {
+			case ast.KindCodeBlock:
+				if n.(*ast.CodeBlock).CodeBlockKind == ast.CodeBlockKindIndented {
+					f.indentedCode = true
+				} else {
+					*constructs = append(*constructs, "fenced code block")
+				}
+			case ast.KindImage:
+				f.image = true
+				*constructs = append(*constructs, "image")
+			case ast.KindLink:
+				*constructs = append(*constructs, "link")
+			case ast.KindAutoLink:
+				*constructs = append(*constructs, "autolink")
+			case ast.KindLinkReferenceDefinition:
+				f.refDefinition = true
+			case ast.KindHeading:
+				if segs := blockSegments(n); len(segs) > 0 {
+					line := decontainer(string(lineAt(srcBytes, starts, lineOf(segs[0].Start))))
+					classifyHeading(line, f, constructs)
+				}
+			case ast.KindThematicBreak:
+				hasBreak = true
+				*constructs = append(*constructs, "thematic break")
+			case ast.KindCodeSpan:
+				*constructs = append(*constructs, "code span")
+			case ast.KindEmphasis, ast.KindStrong:
+				*constructs = append(*constructs, "emphasis")
+			case ast.KindBlockquote:
+				*constructs = append(*constructs, "block quote")
+			case ast.KindList:
+				*constructs = append(*constructs, "list")
+			case ast.KindHTMLBlock:
+				*constructs = append(*constructs, "HTML block")
+			case ast.KindRawHTML:
+				*constructs = append(*constructs, "inline HTML")
+			}
+			for _, seg := range blockSegments(n) {
+				covered[lineOf(seg.Start)] = true
+			}
 			return ast.WalkContinue, nil
-		}
-		switch n.Kind() {
-		case ast.KindCodeBlock:
-			if n.(*ast.CodeBlock).CodeBlockKind == ast.CodeBlockKindIndented {
-				f.indentedCode = true
-			} else {
-				*constructs = append(*constructs, "fenced code block")
-			}
-		case ast.KindImage:
-			f.image = true
-			*constructs = append(*constructs, "image")
-		case ast.KindLink:
-			*constructs = append(*constructs, "link")
-		case ast.KindAutoLink:
-			*constructs = append(*constructs, "autolink")
-		case ast.KindLinkReferenceDefinition:
-			f.refDefinition = true
-		case ast.KindHeading:
-			if segs := blockSegments(n); len(segs) > 0 {
-				line := decontainer(string(lineAt(srcBytes, starts, lineOf(segs[0].Start))))
-				classifyHeading(line, f, constructs)
-			}
-		case ast.KindThematicBreak:
-			hasBreak = true
-			*constructs = append(*constructs, "thematic break")
-		case ast.KindCodeSpan:
-			*constructs = append(*constructs, "code span")
-		case ast.KindEmphasis, ast.KindStrong:
-			*constructs = append(*constructs, "emphasis")
-		case ast.KindBlockquote:
-			*constructs = append(*constructs, "block quote")
-		case ast.KindList:
-			*constructs = append(*constructs, "list")
-		case ast.KindHTMLBlock:
-			*constructs = append(*constructs, "HTML block")
-		case ast.KindRawHTML:
-			*constructs = append(*constructs, "inline HTML")
-		}
-		for _, seg := range blockSegments(n) {
-			covered[lineOf(seg.Start)] = true
-		}
-		return ast.WalkContinue, nil
-	})
+		},
+	)
 	return covered, hasBreak
 }
 
@@ -721,9 +740,24 @@ func normaliseText(rendered string) string {
 	s := regexp.MustCompile(`<[^>]*>`).ReplaceAllString(rendered, " ")
 	s = stdhtml.UnescapeString(s)
 	repl := strings.NewReplacer(
-		"‘", "'", "’", "'", "“", "\"", "”", "\"",
-		"–", "--", "—", "---", "…", "...",
-		"«", "<<", "»", ">>",
+		"‘",
+		"'",
+		"’",
+		"'",
+		"“",
+		"\"",
+		"”",
+		"\"",
+		"–",
+		"--",
+		"—",
+		"---",
+		"…",
+		"...",
+		"«",
+		"<<",
+		"»",
+		">>",
 	)
 	s = repl.Replace(s)
 	return strings.Join(strings.Fields(s), " ")

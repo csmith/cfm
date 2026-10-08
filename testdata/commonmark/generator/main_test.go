@@ -43,9 +43,12 @@ func strikethroughLossExample() []specExample {
 }
 
 func TestLoadOverridesReadsCorpusOverridesDir(t *testing.T) {
-	dir := writeFixtureTree(t, map[string]string{
-		"overrides/042.html": "<p>hand authored</p>\n",
-	})
+	dir := writeFixtureTree(
+		t,
+		map[string]string{
+			"overrides/042.html": "<p>hand authored</p>\n",
+		},
+	)
 	overrides, err := loadOverrides(dir)
 	require.NoError(t, err)
 	assert.Equal(t, map[int]string{42: "<p>hand authored</p>\n"}, overrides)
@@ -59,13 +62,19 @@ func TestLoadOverridesMissingDirectoryIsEmpty(t *testing.T) {
 
 func TestLoadOverridesRejectsNonCanonicalNames(t *testing.T) {
 	for _, name := range []string{"42.html", "0042.html", "042.htm", "spec-042.html"} {
-		t.Run(name, func(t *testing.T) {
-			dir := writeFixtureTree(t, map[string]string{
-				"overrides/" + name: "<p>x</p>\n",
-			})
-			_, err := loadOverrides(dir)
-			assert.ErrorContains(t, err, "bad override file name")
-		})
+		t.Run(
+			name,
+			func(t *testing.T) {
+				dir := writeFixtureTree(
+					t,
+					map[string]string{
+						"overrides/" + name: "<p>x</p>\n",
+					},
+				)
+				_, err := loadOverrides(dir)
+				assert.ErrorContains(t, err, "bad override file name")
+			},
+		)
 	}
 }
 
@@ -97,9 +106,12 @@ func TestGenerateFailsOnContentLossWithoutOverride(t *testing.T) {
 }
 
 func TestGenerateAcceptsContentLossWithOverride(t *testing.T) {
-	dir := writeFixtureTree(t, map[string]string{
-		"overrides/001.html": "<p>struck away</p>\n",
-	})
+	dir := writeFixtureTree(
+		t,
+		map[string]string{
+			"overrides/001.html": "<p>struck away</p>\n",
+		},
+	)
 	m, audit, err := generate(dir, strikethroughLossExample())
 	require.NoError(t, err)
 	require.Len(t, m.Examples, 1)
@@ -114,18 +126,24 @@ func TestGenerateAcceptsContentLossWithOverride(t *testing.T) {
 }
 
 func TestGenerateRejectsUnusedOverrides(t *testing.T) {
-	dir := writeFixtureTree(t, map[string]string{
-		"overrides/002.html": "<p>orphan</p>\n",
-	})
+	dir := writeFixtureTree(
+		t,
+		map[string]string{
+			"overrides/002.html": "<p>orphan</p>\n",
+		},
+	)
 	_, _, err := generate(dir, plainExample())
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "unused overrides: 002.html")
 }
 
 func TestGenerateOverrideMatchingSpecIsNotAdapted(t *testing.T) {
-	dir := writeFixtureTree(t, map[string]string{
-		"overrides/001.html": "<p>hello</p>\n",
-	})
+	dir := writeFixtureTree(
+		t,
+		map[string]string{
+			"overrides/001.html": "<p>hello</p>\n",
+		},
+	)
 	m, _, err := generate(dir, plainExample())
 	require.NoError(t, err)
 	require.Len(t, m.Examples, 1)

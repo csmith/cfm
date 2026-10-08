@@ -287,96 +287,122 @@ func TestFootnoteParse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			label, body, consumed := parseFootnoteDefinition(tt.lines, tt.lazy)
-			assert.Equal(t, tt.wantLabel, label)
-			assert.Equal(t, tt.wantBody, body)
-			assert.Equal(t, tt.wantConsumed, consumed)
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				label, body, consumed := parseFootnoteDefinition(tt.lines, tt.lazy)
+				assert.Equal(t, tt.wantLabel, label)
+				assert.Equal(t, tt.wantBody, body)
+				assert.Equal(t, tt.wantConsumed, consumed)
+			},
+		)
 	}
 }
 
 func TestFootnoteReference(t *testing.T) {
-	t.Run("sup markup", func(t *testing.T) {
-		var f footnotes
-		f.define("1", "note")
-		got, ok := f.reference("1")
-		require.True(t, ok)
-		assert.Equal(t, footnoteSupHTML("fnref:1", 1), got)
-	})
+	t.Run(
+		"sup markup",
+		func(t *testing.T) {
+			var f footnotes
+			f.define("1", "note")
+			got, ok := f.reference("1")
+			require.True(t, ok)
+			assert.Equal(t, footnoteSupHTML("fnref:1", 1), got)
+		},
+	)
 
-	t.Run("undefined is literal", func(t *testing.T) {
-		var f footnotes
-		got, ok := f.reference("99")
-		assert.False(t, ok)
-		assert.Empty(t, got)
-	})
+	t.Run(
+		"undefined is literal",
+		func(t *testing.T) {
+			var f footnotes
+			got, ok := f.reference("99")
+			assert.False(t, ok)
+			assert.Empty(t, got)
+		},
+	)
 
-	t.Run("numbering follows encounter order", func(t *testing.T) {
-		var f footnotes
-		f.define("3", "Third.")
-		f.define("1", "First.")
-		f.define("2", "Second.")
-		got3, ok := f.reference("3")
-		require.True(t, ok)
-		got1, ok := f.reference("1")
-		require.True(t, ok)
-		got2, ok := f.reference("2")
-		require.True(t, ok)
-		assert.Equal(t, footnoteSupHTML("fnref:1", 1), got3)
-		assert.Equal(t, footnoteSupHTML("fnref:2", 2), got1)
-		assert.Equal(t, footnoteSupHTML("fnref:3", 3), got2)
-	})
+	t.Run(
+		"numbering follows encounter order",
+		func(t *testing.T) {
+			var f footnotes
+			f.define("3", "Third.")
+			f.define("1", "First.")
+			f.define("2", "Second.")
+			got3, ok := f.reference("3")
+			require.True(t, ok)
+			got1, ok := f.reference("1")
+			require.True(t, ok)
+			got2, ok := f.reference("2")
+			require.True(t, ok)
+			assert.Equal(t, footnoteSupHTML("fnref:1", 1), got3)
+			assert.Equal(t, footnoteSupHTML("fnref:2", 2), got1)
+			assert.Equal(t, footnoteSupHTML("fnref:3", 3), got2)
+		},
+	)
 
-	t.Run("repeated references get unique ref ids", func(t *testing.T) {
-		var f footnotes
-		f.define("1", "Referenced twice.")
-		got1, ok := f.reference("1")
-		require.True(t, ok)
-		got2, ok := f.reference("1")
-		require.True(t, ok)
-		got3, ok := f.reference("1")
-		require.True(t, ok)
-		assert.Equal(t, footnoteSupHTML("fnref:1", 1), got1)
-		assert.Equal(t, footnoteSupHTML("fnref1:1", 1), got2)
-		assert.Equal(t, footnoteSupHTML("fnref2:1", 1), got3)
-	})
+	t.Run(
+		"repeated references get unique ref ids",
+		func(t *testing.T) {
+			var f footnotes
+			f.define("1", "Referenced twice.")
+			got1, ok := f.reference("1")
+			require.True(t, ok)
+			got2, ok := f.reference("1")
+			require.True(t, ok)
+			got3, ok := f.reference("1")
+			require.True(t, ok)
+			assert.Equal(t, footnoteSupHTML("fnref:1", 1), got1)
+			assert.Equal(t, footnoteSupHTML("fnref1:1", 1), got2)
+			assert.Equal(t, footnoteSupHTML("fnref2:1", 1), got3)
+		},
+	)
 
-	t.Run("undefined labels do not consume numbers", func(t *testing.T) {
-		var f footnotes
-		f.define("1", "note")
-		_, ok := f.reference("99")
-		assert.False(t, ok)
-		got, ok := f.reference("1")
-		require.True(t, ok)
-		assert.Equal(t, footnoteSupHTML("fnref:1", 1), got)
-	})
+	t.Run(
+		"undefined labels do not consume numbers",
+		func(t *testing.T) {
+			var f footnotes
+			f.define("1", "note")
+			_, ok := f.reference("99")
+			assert.False(t, ok)
+			got, ok := f.reference("1")
+			require.True(t, ok)
+			assert.Equal(t, footnoteSupHTML("fnref:1", 1), got)
+		},
+	)
 
-	t.Run("labels are case sensitive", func(t *testing.T) {
-		var f footnotes
-		f.define("a", "lower")
-		f.define("A", "upper")
-		gotA, ok := f.reference("A")
-		require.True(t, ok)
-		gota, ok := f.reference("a")
-		require.True(t, ok)
-		assert.Equal(t, footnoteSupHTML("fnref:1", 1), gotA)
-		assert.Equal(t, footnoteSupHTML("fnref:2", 2), gota)
-	})
+	t.Run(
+		"labels are case sensitive",
+		func(t *testing.T) {
+			var f footnotes
+			f.define("a", "lower")
+			f.define("A", "upper")
+			gotA, ok := f.reference("A")
+			require.True(t, ok)
+			gota, ok := f.reference("a")
+			require.True(t, ok)
+			assert.Equal(t, footnoteSupHTML("fnref:1", 1), gotA)
+			assert.Equal(t, footnoteSupHTML("fnref:2", 2), gota)
+		},
+	)
 
-	t.Run("first definition wins", func(t *testing.T) {
-		var f footnotes
-		assert.True(t, f.define("x", "first"))
-		assert.False(t, f.define("x", "second"))
-		_, ok := f.reference("x")
-		require.True(t, ok)
-		var got string
-		f.render(func(label string) string {
-			got = f.defs[label]
-			return ""
-		})
-		assert.Equal(t, "first", got)
-	})
+	t.Run(
+		"first definition wins",
+		func(t *testing.T) {
+			var f footnotes
+			assert.True(t, f.define("x", "first"))
+			assert.False(t, f.define("x", "second"))
+			_, ok := f.reference("x")
+			require.True(t, ok)
+			var got string
+			f.render(
+				func(label string) string {
+					got = f.defs[label]
+					return ""
+				},
+			)
+			assert.Equal(t, "first", got)
+		},
+	)
 }
 
 func TestFootnoteRender(t *testing.T) {
@@ -394,19 +420,31 @@ func TestFootnoteRender(t *testing.T) {
 			name:   "basic",
 			define: [][2]string{{"1", "The clarifying note."}},
 			refs:   []string{"1"},
-			inner: footnoteFixedHTML("<p>The clarifying note." +
-				footnoteBackrefHTML("fnref:1") + "</p>\n"),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<p>The clarifying note."+footnoteBackrefHTML("fnref:1")+"</p>\n")),
+			inner: footnoteFixedHTML(
+				"<p>The clarifying note." +
+					footnoteBackrefHTML("fnref:1") + "</p>\n",
+			),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<p>The clarifying note."+footnoteBackrefHTML("fnref:1")+"</p>\n",
+				),
+			),
 		},
 		{
 			name:   "repeated reference gets two backlinks",
 			define: [][2]string{{"1", "Referenced twice."}},
 			refs:   []string{"1", "1"},
-			inner: footnoteFixedHTML("<p>Referenced twice." +
-				footnoteBackrefHTML("fnref:1") + footnoteBackrefHTML("fnref1:1") + "</p>\n"),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<p>Referenced twice."+footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n")),
+			inner: footnoteFixedHTML(
+				"<p>Referenced twice." +
+					footnoteBackrefHTML("fnref:1") + footnoteBackrefHTML("fnref1:1") + "</p>\n",
+			),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<p>Referenced twice."+footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n",
+				),
+			),
 		},
 		{
 			name:   "definition order follows reference order",
@@ -433,8 +471,12 @@ func TestFootnoteRender(t *testing.T) {
 			define: [][2]string{{"1", "Used."}, {"2", "Unused."}},
 			refs:   []string{"1"},
 			inner:  footnoteFixedHTML("<p>Used." + footnoteBackrefHTML("fnref:1") + "</p>\n"),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<p>Used."+footnoteBackrefHTML("fnref:1")+"</p>\n")),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<p>Used."+footnoteBackrefHTML("fnref:1")+"</p>\n",
+				),
+			),
 		},
 		{
 			name:   "no references renders nothing",
@@ -447,10 +489,16 @@ func TestFootnoteRender(t *testing.T) {
 			name:   "code-only note keeps backref outside the code block",
 			define: [][2]string{{"1", "text"}},
 			refs:   []string{"1"},
-			inner: footnoteFixedHTML("<pre><code>code\n</code></pre>\n" +
-				footnoteBackrefHTML("fnref:1")),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<pre><code>code\n</code></pre>\n"+footnoteBackrefHTML("fnref:1"))),
+			inner: footnoteFixedHTML(
+				"<pre><code>code\n</code></pre>\n" +
+					footnoteBackrefHTML("fnref:1"),
+			),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<pre><code>code\n</code></pre>\n"+footnoteBackrefHTML("fnref:1"),
+				),
+			),
 		},
 		{
 			name:   "empty note body gets bare backref",
@@ -463,33 +511,48 @@ func TestFootnoteRender(t *testing.T) {
 			name:   "note ending in a list keeps backref outside it",
 			define: [][2]string{{"1", "text"}},
 			refs:   []string{"1"},
-			inner: footnoteFixedHTML("<p>text</p>\n<ul>\n<li>item</li>\n</ul>\n" +
-				footnoteBackrefHTML("fnref:1")),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<p>text</p>\n<ul>\n<li>item</li>\n</ul>\n"+footnoteBackrefHTML("fnref:1"))),
+			inner: footnoteFixedHTML(
+				"<p>text</p>\n<ul>\n<li>item</li>\n</ul>\n" +
+					footnoteBackrefHTML("fnref:1"),
+			),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<p>text</p>\n<ul>\n<li>item</li>\n</ul>\n"+footnoteBackrefHTML("fnref:1"),
+				),
+			),
 		},
 		{
 			name:   "note ending in a blockquote keeps backref outside it",
 			define: [][2]string{{"1", "text"}},
 			refs:   []string{"1"},
-			inner: footnoteFixedHTML("<p>text</p>\n<blockquote>\n<p>quoted</p>\n</blockquote>\n" +
-				footnoteBackrefHTML("fnref:1")),
-			want: footnoteWrapperHTML(footnoteItemHTML(1,
-				"<p>text</p>\n<blockquote>\n<p>quoted</p>\n</blockquote>\n"+footnoteBackrefHTML("fnref:1"))),
+			inner: footnoteFixedHTML(
+				"<p>text</p>\n<blockquote>\n<p>quoted</p>\n</blockquote>\n" +
+					footnoteBackrefHTML("fnref:1"),
+			),
+			want: footnoteWrapperHTML(
+				footnoteItemHTML(
+					1,
+					"<p>text</p>\n<blockquote>\n<p>quoted</p>\n</blockquote>\n"+footnoteBackrefHTML("fnref:1"),
+				),
+			),
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var f footnotes
-			for _, d := range tt.define {
-				f.define(d[0], d[1])
-			}
-			for _, label := range tt.refs {
-				_, ok := f.reference(label)
-				require.True(t, ok)
-			}
-			assert.Equal(t, tt.want, f.render(tt.inner))
-		})
+		t.Run(
+			tt.name,
+			func(t *testing.T) {
+				var f footnotes
+				for _, d := range tt.define {
+					f.define(d[0], d[1])
+				}
+				for _, label := range tt.refs {
+					_, ok := f.reference(label)
+					require.True(t, ok)
+				}
+				assert.Equal(t, tt.want, f.render(tt.inner))
+			},
+		)
 	}
 }
 
@@ -543,14 +606,22 @@ func TestFootnoteRenderDiscoversReferences(t *testing.T) {
 	for _, label := range []string{"1", "2"} {
 		in[label] = r.resolve(f.defs[label])
 	}
-	got := f.render(func(label string) string {
-		return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
-	})
+	got := f.render(
+		func(label string) string {
+			return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
+		},
+	)
 	want := footnoteWrapperHTML(
-		footnoteItemHTML(1, "<p>see "+footnoteSupHTML("fnref:2", 2)+
-			footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n"),
-		footnoteItemHTML(2, "<p>two "+footnoteSupHTML("fnref1:1", 1)+
-			footnoteBackrefHTML("fnref:2")+"</p>\n"),
+		footnoteItemHTML(
+			1,
+			"<p>see "+footnoteSupHTML("fnref:2", 2)+
+				footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n",
+		),
+		footnoteItemHTML(
+			2,
+			"<p>two "+footnoteSupHTML("fnref1:1", 1)+
+				footnoteBackrefHTML("fnref:2")+"</p>\n",
+		),
 	)
 	assert.Equal(t, want, got)
 	assert.Equal(t, map[string]int{"see [^2]": 1, "two [^1]": 1}, r.counts)
@@ -569,14 +640,22 @@ func TestFootnoteRenderFinalizesBackrefs(t *testing.T) {
 	for _, label := range []string{"a", "b"} {
 		in[label] = r.resolve(f.defs[label])
 	}
-	got := f.render(func(label string) string {
-		return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
-	})
+	got := f.render(
+		func(label string) string {
+			return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
+		},
+	)
 	want := footnoteWrapperHTML(
-		footnoteItemHTML(1, "<p>note a"+
-			footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n"),
-		footnoteItemHTML(2, "<p>b refs "+footnoteSupHTML("fnref1:1", 1)+
-			footnoteBackrefHTML("fnref:2")+"</p>\n"),
+		footnoteItemHTML(
+			1,
+			"<p>note a"+
+				footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n",
+		),
+		footnoteItemHTML(
+			2,
+			"<p>b refs "+footnoteSupHTML("fnref1:1", 1)+
+				footnoteBackrefHTML("fnref:2")+"</p>\n",
+		),
 	)
 	assert.Equal(t, want, got)
 	assert.Equal(t, map[string]int{"note a": 1, "b refs [^a]": 1}, r.counts)
@@ -592,12 +671,18 @@ func TestFootnoteRenderSelfCycle(t *testing.T) {
 	for _, label := range []string{"a"} {
 		in[label] = r.resolve(f.defs[label])
 	}
-	got := f.render(func(label string) string {
-		return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
-	})
-	want := footnoteWrapperHTML(footnoteItemHTML(1,
-		"<p>self "+footnoteSupHTML("fnref1:1", 1)+
-			footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n"))
+	got := f.render(
+		func(label string) string {
+			return attachFootnoteBacklinks(in[label], f.backlinks(label, f.numbers[label]))
+		},
+	)
+	want := footnoteWrapperHTML(
+		footnoteItemHTML(
+			1,
+			"<p>self "+footnoteSupHTML("fnref1:1", 1)+
+				footnoteBackrefHTML("fnref:1")+footnoteBackrefHTML("fnref1:1")+"</p>\n",
+		),
+	)
 	assert.Equal(t, want, got)
 	assert.Equal(t, map[string]int{"self [^a]": 1}, r.counts)
 }
@@ -609,25 +694,39 @@ func TestFootnoteRenderNone(t *testing.T) {
 
 func TestAttachFootnoteBacklinks(t *testing.T) {
 	back := footnoteBackrefHTML("fnref:1")
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"<p>note"+back+"</p>\n",
-		attachFootnoteBacklinks("<p>note</p>\n", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("<p>note</p>\n", back),
+	)
+	assert.Equal(
+		t,
 		"<p>one</p>\n<p>two"+back+"</p>\n",
-		attachFootnoteBacklinks("<p>one</p>\n<p>two</p>\n", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("<p>one</p>\n<p>two</p>\n", back),
+	)
+	assert.Equal(
+		t,
 		"<pre><code>x\n</code></pre>\n"+back,
-		attachFootnoteBacklinks("<pre><code>x\n</code></pre>\n", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("<pre><code>x\n</code></pre>\n", back),
+	)
+	assert.Equal(
+		t,
 		"<ul>\n<li>item</li>\n</ul>\n"+back,
-		attachFootnoteBacklinks("<ul>\n<li>item</li>\n</ul>\n", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("<ul>\n<li>item</li>\n</ul>\n", back),
+	)
+	assert.Equal(
+		t,
 		""+back,
-		attachFootnoteBacklinks("", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("", back),
+	)
+	assert.Equal(
+		t,
 		"<!-- c --><p>note"+back+"</p>\n",
-		attachFootnoteBacklinks("<!-- c --><p>note</p>\n", back))
-	assert.Equal(t,
+		attachFootnoteBacklinks("<!-- c --><p>note</p>\n", back),
+	)
+	assert.Equal(
+		t,
 		"<p>a <em>x</em>"+back+"</p>\n",
-		attachFootnoteBacklinks("<p>a <em>x</em></p>\n", back))
+		attachFootnoteBacklinks("<p>a <em>x</em></p>\n", back),
+	)
 }
