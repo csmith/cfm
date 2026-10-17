@@ -2,5 +2,14 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>meta/renovate"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": [
+        "github.com/yuin/goldmark",
+        "github.com/yuin/goldmark/**"
+      ],
+      "enabled": false
+    }
   ]
 }
