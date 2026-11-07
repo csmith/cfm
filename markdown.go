@@ -17,6 +17,10 @@ type Renderer struct {
 	// Highlight renders fenced code blocks. When nil, or when it reports an
 	// error, fenced code falls back to escaped plain code.
 	Highlight Highlighter
+	// Untrusted renders input from untrusted sources safely: raw HTML is
+	// escaped and shown as text, and links whose destination has a scheme
+	// other than http, https or mailto are rendered without an href.
+	Untrusted bool
 }
 
 // Markdown converts Markdown source to HTML.
@@ -24,7 +28,7 @@ func (r Renderer) Markdown(source string) string {
 	source = strings.ReplaceAll(source, "\r\n", "\n")
 	source = strings.ReplaceAll(source, "\r", "\n")
 	source = strings.ReplaceAll(source, "\x00", "\uFFFD")
-	dc := newDocContext()
+	dc := newDocContext(r.Untrusted)
 	p := newBlockParser(dc)
 	p.parse(source)
 	prepassInline(p.root, dc, dc.inlineFunc())

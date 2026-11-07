@@ -2,6 +2,7 @@ package cfm_test
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -39,6 +40,7 @@ func FuzzMarkdown(f *testing.F) {
 		"***\n___\n* * *\n- - -",
 		"<a href=\"never closed", "[unclosed](href", "*unclosed ** deeper",
 		"    indented code\n    more\n\ntext",
+		"[x](java&#x73;cript:1) <javascript:1> [y](<\tdata:x>)",
 	} {
 		f.Add(seed)
 	}
@@ -48,9 +50,35 @@ func FuzzMarkdown(f *testing.F) {
 			assert.Equal(t, want, cfm.Markdown(source))
 			assert.Equal(t, want, (cfm.Renderer{}).Markdown(source))
 			assert.NotContains(t, want, "\x00")
+
+			untrusted := cfm.Renderer{Untrusted: true}.Markdown(source)
+			for _, m := range untrustedTag.FindAllStringSubmatch(untrusted, -1) {
+				assert.True(t, untrustedTags[strings.ToLower(m[1])], "unexpected tag %q in %q", m[0], untrusted)
+			}
+			for _, m := range untrustedHref.FindAllStringSubmatch(untrusted, -1) {
+				scheme := strings.ToLower(m[1])
+				assert.True(
+					t,
+					scheme == "http" || scheme == "https" || scheme == "mailto",
+					"unsafe href %q in %q",
+					m[0],
+					untrusted,
+				)
+			}
 		},
 	)
 }
+
+var (
+	untrustedTag  = regexp.MustCompile(`</?([^\s/>]*)`)
+	untrustedHref = regexp.MustCompile(`href="[\x00-\x20]*([a-zA-Z][a-zA-Z0-9+.\-\x00-\x20]*):`)
+	untrustedTags = map[string]bool{
+		"a": true, "blockquote": true, "br": true, "code": true, "del": true, "div": true, "em": true,
+		"h1": true, "h2": true, "h3": true, "h4": true, "h5": true, "h6": true, "hr": true, "li": true,
+		"ol": true, "p": true, "pre": true, "strong": true, "sup": true, "table": true, "tbody": true,
+		"td": true, "th": true, "thead": true, "tr": true, "ul": true,
+	}
+)
 
 const concurrentDoc = `# Overview
 

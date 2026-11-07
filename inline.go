@@ -12,6 +12,8 @@ import (
 type inlineContext struct {
 	footnote func(label string) (string, bool)
 	table    bool // table cell source: \| inside code spans becomes |
+	// untrusted disables raw HTML and drops unsafe link destinations.
+	untrusted bool
 }
 
 // renderInline renders the inline content of a paragraph, heading or table
@@ -26,7 +28,7 @@ func renderInline(source string, ctx *inlineContext) string {
 	// Rendered HTML is rarely shorter than its source: escapes and tags only
 	// grow it, so the source length is a good single-allocation estimate.
 	b.Grow(len(source) + len(source)/8)
-	renderChildren(&b, p.root)
+	renderChildren(&b, p.root, p.ctx != nil && p.ctx.untrusted)
 	return b.String()
 }
 
@@ -284,8 +286,10 @@ func (p *inlineParser) runParsers(c byte, line string) *inNode {
 		if n := p.parseAutoLink(line); n != nil {
 			return n
 		}
-		if n := p.parseRawHTML(); n != nil {
-			return n
+		if p.ctx == nil || !p.ctx.untrusted {
+			if n := p.parseRawHTML(); n != nil {
+				return n
+			}
 		}
 		return p.parseTypographer(line)
 	case '*', '_':

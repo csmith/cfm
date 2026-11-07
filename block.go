@@ -92,15 +92,16 @@ type docContext struct {
 	bodies    map[string]*blockParser
 	defOrder  []*blockParser
 	defAnchor *block
+	untrusted bool
 }
 
-func newDocContext() *docContext {
-	return &docContext{ids: &headingIDs{}, notes: &footnotes{}}
+func newDocContext(untrusted bool) *docContext {
+	return &docContext{ids: &headingIDs{}, notes: &footnotes{}, untrusted: untrusted}
 }
 
 func (dc *docContext) inlineFunc() func(string, bool) string {
-	body := &inlineContext{footnote: dc.notes.reference}
-	cell := &inlineContext{footnote: body.footnote, table: true}
+	body := &inlineContext{footnote: dc.notes.reference, untrusted: dc.untrusted}
+	cell := &inlineContext{footnote: body.footnote, table: true, untrusted: dc.untrusted}
 	return func(text string, table bool) string {
 		if table {
 			return renderInline(text, cell)
@@ -387,7 +388,7 @@ func (p *blockParser) interrupts(rest string, baseCol int) bool {
 	if _, ok := parseFenceStart(s); ok {
 		return true
 	}
-	if t := htmlBlockType(s, true); t != 0 && t != 7 {
+	if t := p.htmlBlockType(s, true); t != 0 && t != 7 {
 		return true
 	}
 	if strings.HasPrefix(s, ">") {
@@ -503,7 +504,7 @@ func (p *blockParser) textLine(rest, s string, w, baseCol int) {
 		)
 		return
 	}
-	if t := htmlBlockType(s, p.cur().kind == blockParagraph); t != 0 {
+	if t := p.htmlBlockType(s, p.cur().kind == blockParagraph); t != 0 {
 		p.closeParagraph()
 		h := &htmlBlock{typ: t, end: htmlEndMarker(t, s)}
 		h.lines = append(h.lines, rest)
@@ -1236,6 +1237,15 @@ var htmlBlock6Names = map[string]bool{
 	"p": true, "param": true, "search": true, "section": true, "summary": true,
 	"table": true, "tbody": true, "td": true, "tfoot": true, "th": true,
 	"thead": true, "title": true, "tr": true, "track": true, "ul": true,
+}
+
+// Untrusted input never starts an HTML block, so its lines are parsed as
+// Markdown and any HTML in them renders as escaped text.
+func (p *blockParser) htmlBlockType(s string, paraOpen bool) int {
+	if p.doc.untrusted {
+		return 0
+	}
+	return htmlBlockType(s, paraOpen)
 }
 
 // htmlBlockType classifies a raw HTML block start on the indentation-stripped

@@ -8,7 +8,7 @@ import (
 )
 
 func renderBlocks(source string, inline func(string, bool) string) string {
-	dc := newDocContext()
+	dc := newDocContext(false)
 	p := newBlockParser(dc)
 	p.parse(source)
 	prepassInline(p.root, dc, inline)

@@ -36,4 +36,13 @@ renderer := cfm.Renderer{
 	},
 }
 html = renderer.Markdown(source)
+
+// or for input from untrusted sources
+html = cfm.Renderer{Untrusted: true}.Markdown(source)
 ```
+
+By default the input must be trusted: raw HTML is written out verbatim
+and link destinations keep any scheme. With `Untrusted` set, raw HTML is
+escaped and shown as text, and links with a scheme other than http, https
+or mailto are rendered without an `href`. Syntax highlighter output is
+still trusted.

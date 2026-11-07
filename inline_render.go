@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 )
 
-func renderNodes(b *strings.Builder, n *inNode) {
+func renderNodes(b *strings.Builder, n *inNode, untrusted bool) {
 	switch n.kind {
 	case nText:
 		writeText(b, n.seg)
@@ -26,27 +26,25 @@ func renderNodes(b *strings.Builder, n *inNode) {
 		rawEscape(b, strings.ReplaceAll(n.str, "\n", " "))
 		b.WriteString("</code>")
 	case nEmph, nStrike:
-		writeSpan(b, n)
+		writeSpan(b, n, untrusted)
 	case nLink:
-		b.WriteString(`<a href="`)
-		rawEscape(b, linkDestinationAttr(n.dest))
-		b.WriteByte('"')
+		writeLinkOpen(b, linkDestinationAttr(n.dest), untrusted)
 		if n.hasTitle {
 			b.WriteString(` title="`)
 			writeText(b, n.title)
 			b.WriteByte('"')
 		}
 		b.WriteByte('>')
-		renderChildren(b, n)
+		renderChildren(b, n, untrusted)
 		b.WriteString("</a>")
 	case nAuto:
-		renderAutoLink(b, n)
+		renderAutoLink(b, n, untrusted)
 	default:
 		writeText(b, n.seg)
-		renderChildren(b, n)
+		renderChildren(b, n, untrusted)
 	}
 }
-func writeSpan(b *strings.Builder, n *inNode) {
+func writeSpan(b *strings.Builder, n *inNode, untrusted bool) {
 	open, closing := "<em>", "</em>"
 	switch {
 	case n.kind == nEmph && n.level == 2:
@@ -55,15 +53,52 @@ func writeSpan(b *strings.Builder, n *inNode) {
 		open, closing = "<del>", "</del>"
 	}
 	b.WriteString(open)
-	renderChildren(b, n)
+	renderChildren(b, n, untrusted)
 	b.WriteString(closing)
 }
-func renderChildren(b *strings.Builder, n *inNode) {
+func renderChildren(b *strings.Builder, n *inNode, untrusted bool) {
 	for c := n.firstChild; c != nil; c = c.next {
-		renderNodes(b, c)
+		renderNodes(b, c, untrusted)
 	}
 }
-func renderAutoLink(b *strings.Builder, n *inNode) {
+
+// writeLinkOpen writes an anchor's opening tag up to its attributes, leaving
+// out an href that could run script when rendering untrusted input.
+func writeLinkOpen(b *strings.Builder, href string, untrusted bool) {
+	if untrusted && !safeHref(href) {
+		b.WriteString("<a")
+		return
+	}
+	b.WriteString(`<a href="`)
+	rawEscape(b, href)
+	b.WriteByte('"')
+}
+
+// safeHref reports whether an href's scheme, if it has one, is http, https
+// or mailto. Browsers ignore tabs and newlines anywhere in a URL and strip
+// leading control characters and spaces, so all of those are skipped while
+// reading the scheme. href must already be decoded: it is written to the
+// attribute with only HTML escaping, which the browser undoes.
+func safeHref(href string) bool {
+	var scheme []byte
+	for i := range len(href) {
+		c := href[i]
+		switch {
+		case c <= ' ':
+			continue
+		case c == ':':
+			s := strings.ToLower(string(scheme))
+			return s == "http" || s == "https" || s == "mailto"
+		case isAlpha(c), len(scheme) > 0 && (isDigitByte(c) || c == '+' || c == '-' || c == '.'):
+			scheme = append(scheme, c)
+		default:
+			// Anything else before a colon makes the URL relative.
+			return true
+		}
+	}
+	return true
+}
+func renderAutoLink(b *strings.Builder, n *inNode, untrusted bool) {
 	href := urlEscapePass(n.seg)
 	switch {
 	case n.email && !mailtoPrefix(href):
@@ -71,9 +106,8 @@ func renderAutoLink(b *strings.Builder, n *inNode) {
 	case n.www:
 		href = "http://" + href
 	}
-	b.WriteString(`<a href="`)
-	rawEscape(b, href)
-	b.WriteString(`">`)
+	writeLinkOpen(b, href, untrusted)
+	b.WriteByte('>')
 	rawEscape(b, n.seg)
 	b.WriteString("</a>")
 }
