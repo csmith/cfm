@@ -3,6 +3,7 @@ package cfm
 import (
 	"testing"
 
+	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +25,14 @@ func renderBlockFixture(t *testing.T, source string) string {
 		},
 	)
 
+}
+
+// assertGolden compares got with the test's golden file under
+// testdata/golden. Run the tests with -update to rewrite the golden files.
+func assertGolden(t *testing.T, got string) {
+	t.Helper()
+	goldie.New(t, goldie.WithFixtureDir("testdata/golden"), goldie.WithNameSuffix(".html")).
+		Assert(t, t.Name(), []byte(got))
 }
 
 func TestBlockParagraphs(t *testing.T) {
@@ -73,52 +82,34 @@ func TestBlockHeadings(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		want   string
 	}{
-		{"levels", "# Level one\n## Level two\n### Level three\n#### Level four\n##### Level five\n###### Level six\n",
-			"<h1 id=\"level-one\">Level one</h1>\n" +
-				"<h2 id=\"level-two\">Level two</h2>\n" +
-				"<h3 id=\"level-three\">Level three</h3>\n" +
-				"<h4 id=\"level-four\">Level four</h4>\n" +
-				"<h5 id=\"level-five\">Level five</h5>\n" +
-				"<h6 id=\"level-six\">Level six</h6>\n"},
-		{"collisions", "# Duplicate\n\n## Duplicate\n\n### duplicate\n\n# Hello World\n\n# hello world\n",
-			"<h1 id=\"duplicate\">Duplicate</h1>\n<h2 id=\"duplicate-1\">Duplicate</h2>\n" +
-				"<h3 id=\"duplicate-2\">duplicate</h3>\n<h1 id=\"hello-world\">Hello World</h1>\n" +
-				"<h1 id=\"hello-world-1\">hello world</h1>\n"},
-		{"non-ascii dropped", "# Café Üben Tokyo\n\n# 東京の見出し\n\n# naïve Übung\n",
-			"<h1 id=\"caf-ben-tokyo\">Café Üben Tokyo</h1>\n<h1 id=\"heading\">東京の見出し</h1>\n" +
-				"<h1 id=\"nave-bung\">naïve Übung</h1>\n"},
-		{"raw markup in id", "# foo *bar* \\*baz\\*", "<h1 id=\"foo-bar-baz\">foo *bar* \\*baz\\*</h1>\n"},
-		{"no space is paragraph", "#NoSpaceHere\n\n###Also bad", "<p>#NoSpaceHere</p>\n<p>###Also bad</p>\n"},
-		{"trailing spaces", "# Heading with trailing spaces   \n\n##  Two spaces after marker\n",
-			"<h1 id=\"heading-with-trailing-spaces\">Heading with trailing spaces</h1>\n" +
-				"<h2 id=\"two-spaces-after-marker\">Two spaces after marker</h2>\n"},
-		{"tab after marker", "#\tFoo", "<h1 id=\"foo\">Foo</h1>\n"},
-		{"inner padding", "#                  foo                     ", "<h1 id=\"foo\">foo</h1>\n"},
-		{"closing hashes kept", "## Enclosed Heading ##\n\n### Deeper Enclosure ###\n\n# Just One #\n",
-			"<h2 id=\"enclosed-heading\">Enclosed Heading ##</h2>\n" +
-				"<h3 id=\"deeper-enclosure\">Deeper Enclosure ###</h3>\n<h1 id=\"just-one\">Just One #</h1>\n"},
-		{"mid-line hashes kept", "### foo ### b", "<h3 id=\"foo--b\">foo ### b</h3>\n"},
-		{"hash without space kept", "# foo#", "<h1 id=\"foo\">foo#</h1>\n"},
-		{"empty markers are paragraphs", "#\n\n##\n\n######\n\nNot markers: # and ## inside text.",
-			"<p>#</p>\n<p>##</p>\n<p>######</p>\n<p>Not markers: # and ## inside text.</p>\n"},
-		{"marker with only spaces is paragraph", "# \n##  ", "<p># \n##</p>\n"},
-		{"seven hashes", "####### foo", "<p>####### foo</p>\n"},
-		{"interrupts paragraph", "Foo bar\n# baz\nBar foo", "<p>Foo bar</p>\n<h1 id=\"baz\">baz</h1>\n<p>Bar foo</p>\n"},
-		{"indented heading recognized", "    # Buried Heading", "<h1 id=\"buried-heading\">Buried Heading</h1>\n"},
-		{"indented heading interrupts paragraph", "foo\n    # bar", "<p>foo</p>\n<h1 id=\"bar\">bar</h1>\n"},
-		{"up to three spaces", " ### foo\n  ## foo\n   # foo",
-			"<h3 id=\"foo\">foo</h3>\n<h2 id=\"foo-1\">foo</h2>\n<h1 id=\"foo-2\">foo</h1>\n"},
-		{"escaped hash is paragraph", "\\## foo", "<p>\\## foo</p>\n"},
-		{"escaped closing hashes keep id hyphen", "### foo \\###", "<h3 id=\"foo-\">foo \\###</h3>\n"},
-		{"ids registered from quotes", "> # Solo", "<blockquote>\n<h1 id=\"solo\">Solo</h1>\n</blockquote>\n"},
+		{"levels", "# Level one\n## Level two\n### Level three\n#### Level four\n##### Level five\n###### Level six\n"},
+		{"collisions", "# Duplicate\n\n## Duplicate\n\n### duplicate\n\n# Hello World\n\n# hello world\n"},
+		{"non-ascii dropped", "# Café Üben Tokyo\n\n# 東京の見出し\n\n# naïve Übung\n"},
+		{"raw markup in id", "# foo *bar* \\*baz\\*"},
+		{"no space is paragraph", "#NoSpaceHere\n\n###Also bad"},
+		{"trailing spaces", "# Heading with trailing spaces   \n\n##  Two spaces after marker\n"},
+		{"tab after marker", "#\tFoo"},
+		{"inner padding", "#                  foo                     "},
+		{"closing hashes kept", "## Enclosed Heading ##\n\n### Deeper Enclosure ###\n\n# Just One #\n"},
+		{"mid-line hashes kept", "### foo ### b"},
+		{"hash without space kept", "# foo#"},
+		{"empty markers are paragraphs", "#\n\n##\n\n######\n\nNot markers: # and ## inside text."},
+		{"marker with only spaces is paragraph", "# \n##  "},
+		{"seven hashes", "####### foo"},
+		{"interrupts paragraph", "Foo bar\n# baz\nBar foo"},
+		{"indented heading recognized", "    # Buried Heading"},
+		{"indented heading interrupts paragraph", "foo\n    # bar"},
+		{"up to three spaces", " ### foo\n  ## foo\n   # foo"},
+		{"escaped hash is paragraph", "\\## foo"},
+		{"escaped closing hashes keep id hyphen", "### foo \\###"},
+		{"ids registered from quotes", "> # Solo"},
 	}
 	for _, tt := range tests {
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
-				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+				assertGolden(t, renderBlockFixture(t, tt.source))
 			},
 		)
 	}
@@ -158,58 +149,42 @@ func TestBlockFences(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		want   string
 	}{
-		{"language", "```go\nif a < b && c != d {\n\treturn \"ok\"\n}\n```",
-			"<pre><code class=\"language-go\">if a &lt; b &amp;&amp; c != d {\n\treturn &quot;ok&quot;\n}\n</code></pre>\n"},
-		{"plain", "```\nplain fenced text <tag> & entity\n```",
-			"<pre><code>plain fenced text &lt;tag&gt; &amp; entity\n</code></pre>\n"},
-		{"tilde", "~~~html\n<p>tilde fenced</p>\n~~~",
-			"<pre><code class=\"language-html\">&lt;p&gt;tilde fenced&lt;/p&gt;\n</code></pre>\n"},
-		{"unclosed", "```go\nnever closed before EOF",
-			"<pre><code class=\"language-go\">never closed before EOF\n</code></pre>\n"},
-		{"longer closing", "````\ninner ``` fence stays content\n````",
-			"<pre><code>inner ``` fence stays content\n</code></pre>\n"},
-		{"info extra words", "```go title=main.go\npackage main\n```",
-			"<pre><code class=\"language-go\">package main\n</code></pre>\n"},
-		{"empty", "```\n```", "<pre><code></code></pre>\n"},
-		{"blank lines kept", "```\na\n\n\nb\n```", "<pre><code>a\n\n\nb\n</code></pre>\n"},
-		{"backtick in info is paragraph", "```a```\ntext", "<p>```a```\ntext</p>\n"},
-		{"tilde info may hold backticks", "~~~ ```\nx\n~~~", "<pre><code class=\"language-```\">x\n</code></pre>\n"},
-		{"escape in info", "```foo\\+bar\nx\n```", "<pre><code class=\"language-foo+bar\">x\n</code></pre>\n"},
-		{"entity in info", "```f&ouml;\nx\n```", "<pre><code class=\"language-f\u00f6\">x\n</code></pre>\n"},
-		{"unknown entity in info", "```&notit;", "<pre><code class=\"language-&amp;notit;\"></code></pre>\n"},
-		{"numeric entity in info", "```C&#43;+\nx\n```", "<pre><code class=\"language-C++\">x\n</code></pre>\n"},
-		{"numeric entity needs hash", "```&00;", "<pre><code class=\"language-&amp;00;\"></code></pre>\n"},
-		{"invalid numeric prefix", "```&z123;", "<pre><code class=\"language-&amp;z123;\"></code></pre>\n"},
-		{"numeric zero becomes replacement", "```&#0;", "<pre><code class=\"language-�\"></code></pre>\n"},
-		{"hex entity digit limit", "```&#x0000000;",
-			"<pre><code class=\"language-&amp;#x0000000;\"></code></pre>\n"},
-		{"escape before entity stays literal", "```\\&amp;\nx\n```",
-			"<pre><code class=\"language-&amp;amp;\">x\n</code></pre>\n"},
-		{"interrupts paragraph", "text\n```js\nvar x;\n```",
-			"<p>text</p>\n<pre><code class=\"language-js\">var x;\n</code></pre>\n"},
-		{"content dedented to opener", "  ```go\n  x()\n  ```", "<pre><code class=\"language-go\">x()\n</code></pre>\n"},
-		{"content beyond opener indent kept", "```\n    four spaces inside\n```",
-			"<pre><code>    four spaces inside\n</code></pre>\n"},
-		{"indented opener and closer", "    ```go\n    fmt.Println(\"hi\")\n    ```",
-			"<pre><code class=\"language-go\">fmt.Println(&quot;hi&quot;)\n</code></pre>\n"},
-		{"indented would-be closer stays content", "```\naaa\n    ```",
-			"<pre><code>aaa\n    ```\n</code></pre>\n"},
-		{"closing fence may be three deeper", "```\naaa\n   ```", "<pre><code>aaa\n</code></pre>\n"},
-		{"shorter closing fence stays content", "````\na\n```\nb\n````", "<pre><code>a\n```\nb\n</code></pre>\n"},
-		{"closing fence needs same char", "```\na\n~~~\n```", "<pre><code>a\n~~~\n</code></pre>\n"},
-		{"inside quote", "> ```\n> fenced in quote\n> ```",
-			"<blockquote>\n<pre><code>fenced in quote\n</code></pre>\n</blockquote>\n"},
-		{"inside list item", "- item with code:\n\n  ```go\n  fmt.Println(\"hi\")\n  ```\n\n- next item",
-			"<ul>\n<li>\n<p>item with code:</p>\n<pre><code class=\"language-go\">fmt.Println(&quot;hi&quot;)\n" +
-				"</code></pre>\n</li>\n<li>\n<p>next item</p>\n</li>\n</ul>\n"},
+		{"language", "```go\nif a < b && c != d {\n\treturn \"ok\"\n}\n```"},
+		{"plain", "```\nplain fenced text <tag> & entity\n```"},
+		{"tilde", "~~~html\n<p>tilde fenced</p>\n~~~"},
+		{"unclosed", "```go\nnever closed before EOF"},
+		{"longer closing", "````\ninner ``` fence stays content\n````"},
+		{"info extra words", "```go title=main.go\npackage main\n```"},
+		{"empty", "```\n```"},
+		{"blank lines kept", "```\na\n\n\nb\n```"},
+		{"backtick in info is paragraph", "```a```\ntext"},
+		{"tilde info may hold backticks", "~~~ ```\nx\n~~~"},
+		{"escape in info", "```foo\\+bar\nx\n```"},
+		{"entity in info", "```f&ouml;\nx\n```"},
+		{"unknown entity in info", "```&notit;"},
+		{"numeric entity in info", "```C&#43;+\nx\n```"},
+		{"numeric entity needs hash", "```&00;"},
+		{"invalid numeric prefix", "```&z123;"},
+		{"numeric zero becomes replacement", "```&#0;"},
+		{"hex entity digit limit", "```&#x0000000;"},
+		{"escape before entity stays literal", "```\\&amp;\nx\n```"},
+		{"interrupts paragraph", "text\n```js\nvar x;\n```"},
+		{"content dedented to opener", "  ```go\n  x()\n  ```"},
+		{"content beyond opener indent kept", "```\n    four spaces inside\n```"},
+		{"indented opener and closer", "    ```go\n    fmt.Println(\"hi\")\n    ```"},
+		{"indented would-be closer stays content", "```\naaa\n    ```"},
+		{"closing fence may be three deeper", "```\naaa\n   ```"},
+		{"shorter closing fence stays content", "````\na\n```\nb\n````"},
+		{"closing fence needs same char", "```\na\n~~~\n```"},
+		{"inside quote", "> ```\n> fenced in quote\n> ```"},
+		{"inside list item", "- item with code:\n\n  ```go\n  fmt.Println(\"hi\")\n  ```\n\n- next item"},
 	}
 	for _, tt := range tests {
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
-				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+				assertGolden(t, renderBlockFixture(t, tt.source))
 			},
 		)
 	}
@@ -367,38 +342,25 @@ func TestBlockQuotes(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		want   string
 	}{
-		{"lazy continuation", "> First quoted line\nlazy continuation of the same paragraph.",
-			"<blockquote>\n<p>First quoted line\nlazy continuation of the same paragraph.</p>\n</blockquote>\n"},
-		{"nested", "> outer\n>\n> > inner\n>\n> back to outer",
-			"<blockquote>\n<p>outer</p>\n<blockquote>\n<p>inner</p>\n</blockquote>\n<p>back to outer</p>\n</blockquote>\n"},
-		{"rich", "> # Heading in quote\n>\n> - a list item\n>\n> ```\n> fenced in quote\n> ```",
-			"<blockquote>\n<h1 id=\"heading-in-quote\">Heading in quote</h1>\n<ul>\n<li>a list item</li>\n</ul>\n" +
-				"<pre><code>fenced in quote\n</code></pre>\n</blockquote>\n"},
-		{"lazy through list", "> - item\nlazy", "<blockquote>\n<ul>\n<li>item\nlazy</li>\n</ul>\n</blockquote>\n"},
-		{"heading closes quote", "> para\n# heading",
-			"<blockquote>\n<p>para</p>\n</blockquote>\n<h1 id=\"heading\">heading</h1>\n"},
-		{"quote after item", "- foo\n> quote", "<ul>\n<li>foo</li>\n</ul>\n<blockquote>\n<p>quote</p>\n</blockquote>\n"},
-		{"lazy in nested quotes and list", "> 1. > Blockquote\ncontinued here.",
-			"<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n" +
-				"</ol>\n</blockquote>\n"},
-		{"prefixed lazy in nested quotes and list", "> 1. > Blockquote\n> continued here.",
-			"<blockquote>\n<ol>\n<li>\n<blockquote>\n<p>Blockquote\ncontinued here.</p>\n</blockquote>\n</li>\n" +
-				"</ol>\n</blockquote>\n"},
-		{"double prefix then spaced lazy", ">>- one\n>>\n  >  > two",
-			"<blockquote>\n<blockquote>\n<ul>\n<li>one</li>\n</ul>\n<p>two</p>\n</blockquote>\n</blockquote>\n"},
-		{"deep quoted ordered item", "   > > 1.  one\n>>\n>>     two",
-			"<blockquote>\n<blockquote>\n<ol>\n<li>\n<p>one</p>\n<p>two</p>\n</li>\n</ol>\n</blockquote>\n</blockquote>\n"},
-		{"indented deeper quote opens fresh", "> para\n      > deeper",
-			"<blockquote>\n<p>para</p>\n</blockquote>\n<blockquote>\n<p>deeper</p>\n</blockquote>\n"},
-		{"blank closes quote", "> a\n\nb", "<blockquote>\n<p>a</p>\n</blockquote>\n<p>b</p>\n"},
+		{"lazy continuation", "> First quoted line\nlazy continuation of the same paragraph."},
+		{"nested", "> outer\n>\n> > inner\n>\n> back to outer"},
+		{"rich", "> # Heading in quote\n>\n> - a list item\n>\n> ```\n> fenced in quote\n> ```"},
+		{"lazy through list", "> - item\nlazy"},
+		{"heading closes quote", "> para\n# heading"},
+		{"quote after item", "- foo\n> quote"},
+		{"lazy in nested quotes and list", "> 1. > Blockquote\ncontinued here."},
+		{"prefixed lazy in nested quotes and list", "> 1. > Blockquote\n> continued here."},
+		{"double prefix then spaced lazy", ">>- one\n>>\n  >  > two"},
+		{"deep quoted ordered item", "   > > 1.  one\n>>\n>>     two"},
+		{"indented deeper quote opens fresh", "> para\n      > deeper"},
+		{"blank closes quote", "> a\n\nb"},
 	}
 	for _, tt := range tests {
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
-				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+				assertGolden(t, renderBlockFixture(t, tt.source))
 			},
 		)
 	}
@@ -480,36 +442,21 @@ func TestBlockTables(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		want   string
 	}{
-		{"basic", "| One | Two |\n|-----|-----|\n| 1 | 2 |",
-			"<table>\n<thead>\n<tr>\n<th>One</th>\n<th>Two</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n" +
-				"<td>2</td>\n</tr>\n</tbody>\n</table>\n"},
-		{"after paragraph prefix", "intro\n| a | b |\n| --- | --- |\n| 1 | 2 |",
-			"<p>intro</p>\n<table>\n<thead>\n<tr>\n<th>a</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n" +
-				"<td>1</td>\n<td>2</td>\n</tr>\n</tbody>\n</table>\n"},
-		{"stops at interruption", "| a | b |\n| --- | --- |\n| 1 | 2 |\n# Head",
-			"<table>\n<thead>\n<tr>\n<th>a</th>\n<th>b</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>1</td>\n" +
-				"<td>2</td>\n</tr>\n</tbody>\n</table>\n" +
-				"<h1 id=\"head\">Head</h1>\n"},
-		{"count mismatch stays paragraph", "no | table | here\n:--- | :---",
-			"<p>no | table | here\n:--- | :---</p>\n"},
-		{"paragraph before blank pair stays text", "just | some | text\n\nno | table | here\n:--- | :---",
-			"<p>just | some | text</p>\n<p>no | table | here\n:--- | :---</p>\n"},
-		{"rows fit the delimiter columns", "| A | B | C |\n|---|---|---|\n| short |\n| x | y | z | extra |",
-			"<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n" +
-				"<td>short</td>\n<td></td>\n<td></td>\n</tr>\n<tr>\n<td>x</td>\n<td>y</td>\n<td>z</td>\n</tr>\n" +
-				"</tbody>\n</table>\n"},
-		{"multiple prefixed tables", "intro\n| a |\n|-|\n\noutro\n| b |\n|-|",
-			"<p>intro</p>\n<table>\n<thead>\n<tr>\n<th>a</th>\n</tr>\n</thead>\n</table>\n" +
-				"<p>outro</p>\n<table>\n<thead>\n<tr>\n<th>b</th>\n</tr>\n</thead>\n</table>\n"},
-		{"no table without delimiter", "| just | one | row |", "<p>| just | one | row |</p>\n"},
+		{"basic", "| One | Two |\n|-----|-----|\n| 1 | 2 |"},
+		{"after paragraph prefix", "intro\n| a | b |\n| --- | --- |\n| 1 | 2 |"},
+		{"stops at interruption", "| a | b |\n| --- | --- |\n| 1 | 2 |\n# Head"},
+		{"count mismatch stays paragraph", "no | table | here\n:--- | :---"},
+		{"paragraph before blank pair stays text", "just | some | text\n\nno | table | here\n:--- | :---"},
+		{"rows fit the delimiter columns", "| A | B | C |\n|---|---|---|\n| short |\n| x | y | z | extra |"},
+		{"multiple prefixed tables", "intro\n| a |\n|-|\n\noutro\n| b |\n|-|"},
+		{"no table without delimiter", "| just | one | row |"},
 	}
 	for _, tt := range tests {
 		t.Run(
 			tt.name,
 			func(t *testing.T) {
-				assert.Equal(t, tt.want, renderBlockFixture(t, tt.source))
+				assertGolden(t, renderBlockFixture(t, tt.source))
 			},
 		)
 	}

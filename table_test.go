@@ -345,7 +345,6 @@ func TestTableRender(t *testing.T) {
 	tests := []struct {
 		name  string
 		lines []string
-		want  string
 	}{
 		{
 			name: "alignment styles",
@@ -355,28 +354,6 @@ func TestTableRender(t *testing.T) {
 				"| a | b | c |",
 				"| wider cell | m | z |",
 			},
-			want: `<table>
-<thead>
-<tr>
-<th style="text-align:left">Left</th>
-<th style="text-align:center">Center</th>
-<th style="text-align:right">Right</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">a</td>
-<td style="text-align:center">b</td>
-<td style="text-align:right">c</td>
-</tr>
-<tr>
-<td style="text-align:left">wider cell</td>
-<td style="text-align:center">m</td>
-<td style="text-align:right">z</td>
-</tr>
-</tbody>
-</table>
-`,
 		},
 		{
 			name: "no alignment attributes",
@@ -385,21 +362,6 @@ func TestTableRender(t *testing.T) {
 				"|-----|-----|",
 				"| 1 | 2 |",
 			},
-			want: `<table>
-<thead>
-<tr>
-<th>One</th>
-<th>Two</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>2</td>
-</tr>
-</tbody>
-</table>
-`,
 		},
 		{
 			name: "empty body has no tbody",
@@ -407,15 +369,6 @@ func TestTableRender(t *testing.T) {
 				"| a | b |",
 				"|---|---|",
 			},
-			want: `<table>
-<thead>
-<tr>
-<th>a</th>
-<th>b</th>
-</tr>
-</thead>
-</table>
-`,
 		},
 		{
 			name: "irregular rows",
@@ -425,28 +378,6 @@ func TestTableRender(t *testing.T) {
 				"| short row |",
 				"| x | y | z | extra cell |",
 			},
-			want: `<table>
-<thead>
-<tr>
-<th>A</th>
-<th>B</th>
-<th>C</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>short row</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>x</td>
-<td>y</td>
-<td>z</td>
-</tr>
-</tbody>
-</table>
-`,
 		},
 		{
 			name: "cells are escaped by the callback",
@@ -455,21 +386,6 @@ func TestTableRender(t *testing.T) {
 				"|---|---|",
 				"| x | y |",
 			},
-			want: `<table>
-<thead>
-<tr>
-<th>a &amp; b</th>
-<th>&lt;i&gt;c&lt;/i&gt;</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>x</td>
-<td>y</td>
-</tr>
-</tbody>
-</table>
-`,
 		},
 	}
 	for _, tt := range tests {
@@ -479,7 +395,7 @@ func TestTableRender(t *testing.T) {
 				table, consumed := parseTable(tt.lines)
 				require.NotNil(t, table)
 				assert.Equal(t, len(tt.lines), consumed)
-				assert.Equal(t, tt.want, renderTable(table, escapeHTML))
+				assertGolden(t, renderTable(table, escapeHTML))
 			},
 		)
 	}
@@ -517,27 +433,5 @@ func TestTableRenderDelegatesInline(t *testing.T) {
 		},
 		seen,
 	)
-	assert.Equal(
-		t,
-		`<table>
-<thead>
-<tr>
-<th>[Expression]</th>
-<th>[Meaning]</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>[a \| b]</td>
-<td>[literal pipe]</td>
-</tr>
-<tr>
-<td>[`+"`x \\| y`"+`]</td>
-<td>[pipe in code span]</td>
-</tr>
-</tbody>
-</table>
-`,
-		got,
-	)
+	assertGolden(t, got)
 }

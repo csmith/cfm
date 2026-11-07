@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"chameth.com/cfm"
+	"github.com/sebdah/goldie/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -95,35 +96,19 @@ sum := a + b
 [^note]: Repeated note.
 `
 
-const concurrentWant = `<h1 id="overview">Overview</h1>
-<p>Body one.<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
-<h2 id="overview-1">Overview</h2>
-<p>Body two.<sup id="fnref1:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>` +
-	`<sup id="fnref2:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
-<pre><code class="language-go highlighted">sum := a + b
-</code></pre>
-<div class="footnotes" role="doc-endnotes">
-<hr>
-<ol>
-<li id="fn:1">
-<p>Repeated note.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a>&#160;` +
-	`<a href="#fnref1:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a>&#160;` +
-	`<a href="#fnref2:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
-</li>
-</ol>
-</div>
-`
-
 func TestConcurrentRendererIndependentCalls(t *testing.T) {
 	renderer := cfm.Renderer{Highlight: func(code, language string) (string, error) {
 		return `<pre><code class="language-` + language + ` highlighted">` + code + "</code></pre>\n", nil
 	}}
+	want := renderer.Markdown(concurrentDoc)
+	goldie.New(t, goldie.WithFixtureDir("testdata/golden"), goldie.WithNameSuffix(".html")).
+		Assert(t, t.Name(), []byte(want))
 	var wg sync.WaitGroup
 	for range 8 {
 		wg.Go(
 			func() {
 				for range 25 {
-					assert.Equal(t, concurrentWant, renderer.Markdown(concurrentDoc))
+					assert.Equal(t, want, renderer.Markdown(concurrentDoc))
 				}
 			},
 		)
