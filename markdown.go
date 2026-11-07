@@ -32,8 +32,7 @@ func (r Renderer) Markdown(source string) string {
 	p := newBlockParser(dc)
 	p.parse(source)
 	prepassInline(p.root, dc, dc.inlineFunc())
-	body := p.render(r)
-	return body + dc.notes.render(func(label string) string { return dc.noteHTML(label, r) })
+	return p.render(r) + dc.notes.render(func(label string) string { return dc.noteHTML(label, r) })
 }
 
 func escapeHTML(s string) string {

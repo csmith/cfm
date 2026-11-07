@@ -173,10 +173,10 @@ func (ip *inlinePrepass) table(b *block) {
 }
 
 func (dc *docContext) noteHTML(label string, r Renderer) string {
-	p := dc.bodies[label]
-	body := p.render(r)
-	backlinks := dc.notes.backlinks(label, dc.notes.numbers[label])
-	return attachFootnoteBacklinks(body, backlinks)
+	return attachFootnoteBacklinks(
+		dc.bodies[label].render(r),
+		dc.notes.backlinks(label, dc.notes.numbers[label]),
+	)
 }
 
 type blockParser struct {
@@ -696,20 +696,17 @@ func (p *blockParser) handleMarker(s string, M int, m listMarker) {
 		}
 	}
 	if p.cur().kind != blockList || !listSameType(p.cur(), m) {
-		l := &block{kind: blockList, ordered: m.ordered, marker: m.marker, listStart: m.num}
-		p.openBlock(l)
+		p.openBlock(&block{kind: blockList, ordered: m.ordered, marker: m.marker, listStart: m.num})
 	}
 	indent := m.markerW + m.spaces
 	if m.blank {
 		indent = m.markerW + 1
 	}
-	item := &block{kind: blockItem, contentCol: M + indent, indent: indent}
-	p.openBlock(item)
+	p.openBlock(&block{kind: blockItem, contentCol: M + indent, indent: indent})
 	if m.blank {
 		return
 	}
-	content := dedent(s[m.markerW:], m.spaces)
-	p.lineAt(content, M+indent)
+	p.lineAt(dedent(s[m.markerW:], m.spaces), M+indent)
 }
 
 func (p *blockParser) fenceLine(b *block, rest string) {
@@ -801,8 +798,7 @@ func (br *blockRenderer) frame(f renderFrame) {
 	case blockItem:
 		br.item(b)
 	case blockTable:
-		cells := b.tableCells
-		br.out.WriteString(renderTable(b.table, cells.inline))
+		br.out.WriteString(renderTable(b.table, b.tableCells.inline))
 	}
 }
 
@@ -1213,8 +1209,7 @@ func namedEntityRef(s string, i int) (string, int, bool) {
 	if j == i+1 || j >= len(s) || s[j] != ';' {
 		return "", 0, false
 	}
-	name := s[i : j+1]
-	chars, ok := decodeNamedEntity(name)
+	chars, ok := decodeNamedEntity(s[i : j+1])
 	if !ok {
 		return "", 0, false
 	}

@@ -108,10 +108,9 @@ func TestHighlightNilFallsBack(t *testing.T) {
 }
 
 func TestHighlightNesting(t *testing.T) {
-	source := "- item:\n\n  ```go\n  in list\n  ```\n\n> ```\n> in quote\n> ```\n"
 	out, calls := renderHighlight(
 		t,
-		source,
+		"- item:\n\n  ```go\n  in list\n  ```\n\n> ```\n> in quote\n> ```\n",
 		func(code, language string) (string, error) {
 			return "<hl>" + language + ":" + code + "</hl>", nil
 		},

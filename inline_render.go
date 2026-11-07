@@ -265,8 +265,7 @@ func namedCharReference(s string, i, next int) (int, string, bool, bool) {
 	if j == next || j >= len(s) || s[j] != ';' {
 		return 0, "", false, false
 	}
-	name := s[i : j+1]
-	chars, ok := decodeNamedEntity(name)
+	chars, ok := decodeNamedEntity(s[i : j+1])
 	if !ok {
 		return 0, "", false, false
 	}
@@ -408,8 +407,7 @@ func resolveEntityNames(s string) string {
 		if j == i+1 || j >= len(s) || s[j] != ';' {
 			continue
 		}
-		name := s[i : j+1]
-		chars, ok := decodeNamedEntity(name)
+		chars, ok := decodeNamedEntity(s[i : j+1])
 		if !ok {
 			continue
 		}
